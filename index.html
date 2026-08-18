@@ -12,7 +12,7 @@
 <meta name="description" content="Canvas and Google Classroom in one place.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
 :root{
@@ -134,6 +134,7 @@ a{color:var(--primary)}
 .pill.late{background:var(--warn-soft);color:var(--warn)}
 .pill.todo{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .pill.excused{background:var(--surface-2);color:var(--muted)}
+.pill.past{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 @media (max-width:640px){
   .row{grid-template-columns:60px 1fr;gap:11px;padding:11px 13px}
   .right{grid-column:2;justify-content:flex-start;margin-top:2px}
@@ -155,6 +156,13 @@ a{color:var(--primary)}
 .panel > p{color:var(--ink-2);margin:0 0 18px;font-size:14px;max-width:62ch}
 .field{margin-bottom:14px}
 .field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;
+  background:var(--surface-2);font-family:var(--mono);font-size:12px;min-height:74px;resize:vertical;line-height:1.5}
+.field textarea:focus{outline:2px solid var(--primary);outline-offset:-1px;background:var(--surface)}
+.subhead{font-family:var(--display);font-size:13px;font-weight:600;margin:20px 0 3px;letter-spacing:-.005em}
+.subhead .tag{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--ok-soft);color:var(--ok);padding:2px 6px;border-radius:4px;margin-left:7px;vertical-align:1px}
+.subhead .tag.alt{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
 .field input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);font-family:var(--mono);font-size:13px}
 .field input:focus{outline:2px solid var(--primary);outline-offset:-1px;background:var(--surface)}
 .field .help{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
@@ -181,6 +189,18 @@ details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface
 .diag .fail{background:var(--danger-soft)}
 .diag .step span{color:var(--ink-2);line-height:1.45}
 .diag .step span em{font-style:normal;color:var(--ink);font-weight:600}
+.gbtn{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 12px;
+  background:#FFFFFF;border:1px solid #747775;border-radius:4px;
+  font-family:Roboto,var(--body);font-weight:500;font-size:14px;letter-spacing:.25px;color:#1F1F1F;
+  transition:background .15s ease, box-shadow .15s ease}
+.gbtn:hover{background:#F7F8F8;box-shadow:0 1px 3px rgba(60,64,67,.28)}
+.gbtn:disabled{opacity:.55;cursor:default;box-shadow:none;background:#FFFFFF}
+.gbtn svg{display:block;flex:0 0 18px}
+@media (prefers-color-scheme:dark){
+  .gbtn{background:#131314;border-color:#8E918F;color:#E3E3E3}
+  .gbtn:hover{background:#1B1B1C}
+  .gbtn:disabled{background:#131314}
+}
 .empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:14px}
 .notice{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--surface);
   border-radius:7px;padding:11px 14px;font-size:13px;color:var(--ink-2);margin:14px 0;line-height:1.5}
@@ -191,6 +211,15 @@ details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface
 </style>
 </head>
 <body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="g-logo" viewBox="0 0 48 48">
+    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+  </symbol>
+</svg>
 
 <header class="masthead">
   <div class="wrap">
@@ -244,42 +273,62 @@ details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface
 
     <div class="panel">
       <h2>Connect Google Classroom</h2>
-      <p id="gcIntro">Classroom talks to the browser directly, but Google needs to know which app is asking. You create a free client ID once, under your own Google account.</p>
-      <div id="gcExtOnly" class="hidden">
-        <div class="btnrow" style="margin-bottom:12px">
-          <button class="btn ghost" id="btnGcExt">Sign in to Google Classroom</button>
-          <span class="status off" id="gcExtState">not connected</span>
-        </div>
-        <div class="help" style="margin-bottom:4px">Classroom is optional. Canvas works without it.</div>
-        <details class="acc">
-          <summary>How to switch it on</summary>
-          <ol>
-            <li>Open <code>chrome://extensions</code> and copy this extension's ID.</li>
-            <li>At <code>console.cloud.google.com</code>, create a project and enable the <code>Google Classroom API</code>.</li>
-            <li>Credentials → Create credentials → OAuth client ID → <b>Chrome Extension</b>. Paste the ID.</li>
-            <li>Open <code>manifest.json</code> in this folder, put that client ID on the <code>client_id</code> line, save.</li>
-            <li>Back on <code>chrome://extensions</code>, hit reload on the Classboard card, then click Sign in above.</li>
-          </ol>
-        </details>
-      </div>
-      <div id="gcWebOnly">
+      <p id="gcIntro">Classroom needs some way to prove it's you. Three routes below — the first works from a school account and needs no Google Cloud project.</p>
+
+      <div class="subhead">1 · Classroom feed <span class="tag">full grades · no project</span></div>
       <div class="field">
-        <label for="gcId">Google client ID</label>
-        <input id="gcId" placeholder="123456789-abc.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
-        <div class="help" id="originHelp"></div>
+        <label for="gcFeed">Feed link</label>
+        <input id="gcFeed" placeholder="https://script.google.com/macros/s/AKfy.../exec" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="field">
+        <label for="gcFeedKey">Feed key</label>
+        <input id="gcFeedKey" type="password" placeholder="the phrase you set inside the script" autocomplete="off" spellcheck="false">
+        <div class="help">A short script runs inside your own Google account, reads Classroom, and passes the answer to this page. Google authorises it as you, so there's no project, client ID, or consent screen anywhere in it.</div>
       </div>
       <details class="acc">
-        <summary>How to get a client ID</summary>
+        <summary>How to set the feed up</summary>
         <ol>
-          <li>Go to <code>console.cloud.google.com</code> and create a project.</li>
-          <li>APIs &amp; Services → Library → enable <code>Google Classroom API</code>.</li>
-          <li>Under the OAuth consent screen, pick External, and add your own school email as a test user.</li>
-          <li>Credentials → Create credentials → OAuth client ID → Web application.</li>
-          <li>Add this page's address as an authorized JavaScript origin, then copy the client ID here.</li>
+          <li>Open <code>script.google.com/create</code> signed in with your school account.</li>
+          <li>Delete the sample code, paste in all of <code>classroom-feed.gs</code>.</li>
+          <li>Change the <code>SECRET</code> line to a long phrase of your own. Keep it.</li>
+          <li>Left sidebar → <b>Project Settings</b> → tick <b>Show "appsscript.json" manifest file in editor</b>.</li>
+          <li>Back in <b>Editor</b>, open <code>appsscript.json</code>, replace everything in it with the file of that name, save.</li>
+          <li>Pick <code>testFeed</code> in the function dropdown and press <b>Run</b>. Approve the permissions — you'll see "Google hasn't verified this app", which is expected for your own script: <b>Advanced</b> → <b>Go to…</b>. The log should list your classes.</li>
+          <li><b>Deploy</b> → <b>New deployment</b> → gear icon → <b>Web app</b>. Execute as <b>Me</b>, Who has access <b>Anyone</b>. <b>Deploy</b>.</li>
+          <li>Copy the <b>Web app URL</b> ending in <code>/exec</code> into the field above, and your phrase into the key field.</li>
         </ol>
       </details>
-      </div>
-      <div class="notice"><b>If sign-in gets blocked:</b> some schools stop students from connecting outside apps to their school Google account. That's an admin setting, and nothing here can work around it. Canvas will still work on its own.</div>
+      <div class="notice">Anyone holding that link can call it, so the key is what protects your grades. Make it long, and don't post the link anywhere. To revoke it, open the script and change <code>SECRET</code>.</div>
+
+      <details class="acc">
+        <summary>2 · Class calendar links — due dates only, no grades</summary>
+        <div class="field" style="margin-top:14px">
+          <label for="gcIcs">Secret iCal addresses, one per line</label>
+          <textarea id="gcIcs" spellcheck="false" placeholder="https://calendar.google.com/calendar/ical/.../private-abc123/basic.ics"></textarea>
+          <div class="help">Every class also has a calendar in Google Calendar. Open <code>calendar.google.com</code>, hover a class under <b>My calendars</b>, three dots → <b>Settings and sharing</b> → <b>Integrate calendar</b> → copy <b>Secret address in iCal format</b>. Treat these like passwords.</div>
+        </div>
+      </details>
+
+      <details class="acc">
+        <summary>3 · Google client ID — full grades, needs a Cloud project</summary>
+        <div class="btnrow" style="margin:14px 0 12px">
+          <button class="gbtn" id="btnGcExt" type="button"><svg width="18" height="18" aria-hidden="true"><use href="#g-logo"/></svg>Sign in with Google</button>
+          <span class="status off" id="gcExtState">not connected</span>
+        </div>
+        <div id="gcWebOnly">
+          <div class="field">
+            <label for="gcId">Google client ID</label>
+            <input id="gcId" placeholder="123456789-abc.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
+            <div class="help" id="originHelp"></div>
+          </div>
+          <div class="help">Only worth doing if you can reach <code>console.cloud.google.com</code>. Many school accounts can't, which is what route 1 is for.</div>
+        </div>
+        <div id="gcExtOnly" class="hidden">
+          <div class="help">Put a Chrome Extension client ID on the <code>client_id</code> line of <code>manifest.json</code>, reload the extension, then press the button above.</div>
+        </div>
+      </details>
+
+      <div class="notice"><b>If every route fails:</b> some districts block student accounts from all of this — Cloud Console, Apps Script deployments, and outside apps alike. Canvas still works on its own.</div>
     </div>
 
     <div class="btnrow" style="margin:18px 0 40px">
@@ -292,6 +341,10 @@ details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface
 
   <!-- DASHBOARD -->
   <section id="viewDash" class="hidden">
+    <div class="notice hidden" id="gcBanner" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="flex:1;min-width:220px" id="gcBannerText">Google Classroom isn't connected.</span>
+      <button class="gbtn" id="btnGcBanner" type="button"><svg width="18" height="18" aria-hidden="true"><use href="#g-logo"/></svg>Sign in with Google</button>
+    </div>
     <div class="readouts">
       <div class="readout"><b class="mono" id="rDue">—</b><small>due in 7 days</small></div>
       <div class="readout is-alert"><b class="mono" id="rMiss">—</b><small>missing</small></div>
@@ -350,6 +403,11 @@ const CFG = {
   get cvTok(){ return store.get('cb.cvTok') || ''; },
   get cvProxy(){ return store.get('cb.cvProxy') || ''; },
   get gcId(){ return store.get('cb.gcId') || ''; },
+  get feedUrl(){ return store.get('cb.feed') || ''; },
+  get feedKey(){ return store.get('cb.feedKey') || ''; },
+  get hasFeed(){ return !!(this.feedUrl && this.cvProxy); },
+  get icsList(){ return (store.get('cb.ics')||'').split('\n').map(x=>x.trim()).filter(Boolean); },
+  get hasCalendars(){ return this.icsList.length > 0 && !!this.cvProxy; },
   get hasCanvas(){ return !!(this.cvUrl && this.cvTok && (IS_EXT || this.cvProxy)); },
   get hasGoogle(){ return IS_EXT ? store.get('cb.gcExt') === '1' : !!this.gcId; }
 };
@@ -361,6 +419,7 @@ const SCOPES = [
 ].join(' ');
 
 let COURSES = [];      // normalized courses, each with .items
+let gcTrouble = null;  // last Classroom failure, shown on the dashboard banner
 let filter = 'soon';
 let demoMode = false;
 
@@ -378,6 +437,7 @@ function daysOut(due){ if(!due) return null; return Math.round((midnight(due)-mi
 function railFor(item){
   const d = daysOut(item.due);
   if (item.status==='graded'||item.status==='submitted'||item.status==='excused'||item.status==='late') return {cls:'done', txt:'✓'};
+  if (item.status==='past') return {cls:'', txt:'—'};
   if (item.status==='missing') return {cls:'late', txt: d==null ? 'MISSING' : (d<0 ? (-d)+'d late' : 'MISSING')};
   if (d==null) return {cls:'', txt:'—'};
   if (d<0) return {cls:'late', txt:(-d)+'d late'};
@@ -547,7 +607,9 @@ function googleSignIn(interactive){
       callback: r => { if(r && r.access_token){ gToken = r.access_token; resolve(r.access_token); } else reject(new Error('Google sign-in was cancelled.')); },
       error_callback: err => reject(new Error('Google sign-in failed: ' + ((err&&err.type)||'unknown')))
     });
-    gClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+    /* select_account makes Google show the picker, so you can choose the
+       school account rather than whichever one Chrome defaults to. */
+    gClient.requestAccessToken({ prompt: interactive ? 'select_account' : '' });
   });
 }
 
@@ -586,7 +648,7 @@ function gcStatus(sub, due){
 }
 
 async function loadGoogle(){
-  if(!gToken) await googleSignIn(false);
+  if(!gToken) throw new Error('Google Classroom is not signed in yet.');
   const raw = await gcPaged('https://classroom.googleapis.com/v1/courses?courseStates=ACTIVE&studentId=me', 'courses');
   const courses = raw.map(c => ({
     key:'gc-'+c.id, source:'gc', id:c.id,
@@ -623,6 +685,122 @@ async function loadGoogle(){
   return courses;
 }
 
+/* ------------------------------------------------------------------ *
+ * Classroom feed — a script running in your own Google account does
+ * the reading, so nothing here needs a Cloud project or client ID.
+ * ------------------------------------------------------------------ */
+async function loadFeed(){
+  const url = CFG.feedUrl + (CFG.feedUrl.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(CFG.feedKey);
+  const res = await fetch(CFG.cvProxy.replace(/\/+$/,'') + '/?url=' + encodeURIComponent(url));
+  const text = await res.text();
+
+  let data;
+  try{ data = JSON.parse(text); }
+  catch(e){
+    if(/<html|accounts\.google\.com|sign in/i.test(text))
+      throw new Error('The feed asked for a login instead of answering. Redeploy it with Who has access set to Anyone.');
+    throw new Error('The feed did not answer with data. Check the link ends in /exec');
+  }
+  if(!data.ok) throw new Error(data.error || 'The feed refused the request.');
+
+  const now = new Date();
+  return (data.courses || []).map(c => {
+    const items = (c.items || []).map(i => {
+      const due = i.due ? new Date(i.due) : null;
+      let status;
+      if(i.score != null) status = 'graded';
+      else if(i.state === 'TURNED_IN' || i.state === 'RETURNED') status = i.late ? 'late' : 'submitted';
+      else if(i.late) status = 'missing';
+      else status = (due && due < now) ? 'missing' : 'todo';
+      return {
+        id:'feed-'+c.id+'-'+i.id, source:'feed',
+        courseKey:'feed-'+c.id, courseName:c.name,
+        title:i.title, due, points:i.points, score:i.score,
+        status, url:i.link
+      };
+    });
+    let earned = 0, poss = 0;
+    items.forEach(i => { if(i.score != null && i.points) { earned += i.score; poss += i.points; } });
+    return {
+      key:'feed-'+c.id, source:'feed', id:c.id,
+      name:c.name, section:c.section || '',
+      score: poss ? (earned/poss)*100 : null, letter:null,
+      url:c.link, items, error:c.error
+    };
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * Class calendars — the route that needs no Google project. A calendar
+ * link carries its own secret, so there is nothing to sign in to. It
+ * knows titles and due dates; it cannot know grades.
+ * ------------------------------------------------------------------ */
+function icsUnescape(v){
+  return String(v).replace(/\\n/gi,' ').replace(/\\([,;\\\\])/g,'$1').trim();
+}
+function icsDate(v){
+  const m = /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z)?)?$/.exec(String(v).trim());
+  if(!m) return null;
+  const [,Y,Mo,D,h,mi,se,z] = m;
+  if(h === undefined) return new Date(+Y, +Mo-1, +D, 23, 59);   // all-day: treat as end of day
+  if(z) return new Date(Date.UTC(+Y, +Mo-1, +D, +h, +mi, +se));
+  return new Date(+Y, +Mo-1, +D, +h, +mi, +se);
+}
+function parseICS(text){
+  const rows = String(text).replace(/\r\n/g,'\n').split('\n');
+  const lines = [];
+  for(const r of rows){
+    if(/^[ \t]/.test(r) && lines.length) lines[lines.length-1] += r.slice(1);
+    else lines.push(r);
+  }
+  const cal = { name:null, events:[] };
+  let cur = null;
+  for(const line of lines){
+    const t = line.trim();
+    if(t === 'BEGIN:VEVENT'){ cur = {}; continue; }
+    if(t === 'END:VEVENT'){ if(cur && cur.title) cal.events.push(cur); cur = null; continue; }
+    const i = line.indexOf(':');
+    if(i < 0) continue;
+    const key = line.slice(0,i).split(';')[0].toUpperCase();
+    const val = line.slice(i+1);
+    if(!cur){ if(key === 'X-WR-CALNAME') cal.name = icsUnescape(val); continue; }
+    if(key === 'SUMMARY') cur.title = icsUnescape(val);
+    else if(key === 'DTSTART') cur.due = icsDate(val);
+    else if(key === 'UID') cur.uid = val.trim();
+    else if(key === 'DESCRIPTION') cur.desc = icsUnescape(val);
+    else if(key === 'URL') cur.url = val.trim();
+  }
+  return cal;
+}
+
+async function loadCalendars(){
+  const urls = CFG.icsList;
+  const courses = urls.map((u,i) => ({
+    key:'ics-'+i, source:'ics', id:i, url:u, calendar:true,
+    name:'Class calendar '+(i+1), section:'', score:null, letter:null, items:[]
+  }));
+  await pool(courses, 3, async (course) => {
+    try{
+      const res = await fetch(CFG.cvProxy.replace(/\/+$/,'') + '/?url=' + encodeURIComponent(course.url));
+      const text = await res.text();
+      if(!res.ok) throw new Error('The calendar link was refused (' + res.status + '). Copy it again from Google Calendar.');
+      if(!/BEGIN:VCALENDAR/i.test(text)) throw new Error('That link did not return a calendar. Make sure it is the iCal address, ending in .ics');
+      const cal = parseICS(text);
+      if(cal.name) course.name = cal.name;
+      course.url = 'https://calendar.google.com/';
+      const now = new Date();
+      course.items = cal.events.map((e,n) => ({
+        id:'ics-'+course.id+'-'+(e.uid||n), source:'ics',
+        courseKey:course.key, courseName:course.name,
+        title:e.title, due:e.due || null, points:null, score:null,
+        status: (e.due && e.due < now) ? 'past' : 'todo',
+        url:(e.url || (e.desc||'').match(/https?:\/\/\S+/)||[])[0] || 'https://classroom.google.com/'
+      }));
+    }catch(e){ course.error = e.message; }
+  });
+  return courses;
+}
+
 /* run tasks with a small concurrency cap so we don't hammer either service */
 async function pool(list, n, fn){
   const q = list.slice();
@@ -634,7 +812,12 @@ async function pool(list, n, fn){
 /* ------------------------------------------------------------------ *
  * render
  * ------------------------------------------------------------------ */
-const SRC = { canvas:{label:'Canvas', color:'var(--canvas)'}, gc:{label:'Classroom', color:'var(--gc)'} };
+const SRC = {
+  canvas:{label:'Canvas', color:'var(--canvas)'},
+  gc:{label:'Classroom', color:'var(--gc)'},
+  ics:{label:'Class calendar', color:'var(--gc)'},
+  feed:{label:'Classroom', color:'var(--gc)'}
+};
 
 function allItems(){ return COURSES.flatMap(c => c.items || []); }
 
@@ -728,7 +911,10 @@ function renderDash(){
 
     const foot = el('div','foot');
     const g = el('div','gradeval mono');
-    if(c.score == null){ g.className='gradeval mono none'; g.textContent = c.error ? 'Unavailable' : 'No grade yet'; }
+    if(c.score == null){
+      g.className='gradeval mono none';
+      g.textContent = c.error ? 'Unavailable' : (c.calendar ? 'Due dates only' : 'No grade yet');
+    }
     else g.innerHTML = pctText(c.score) + '<small>%' + (c.letter ? ' ' + esc(c.letter) : '') + '</small>';
     foot.appendChild(g);
 
@@ -743,6 +929,15 @@ function renderDash(){
     grid.appendChild(card);
   });
 
+  const calErr = COURSES.find(c => c.calendar && c.error);
+  const showBanner = !!gcTrouble || !!calErr;
+  $('#gcBanner').classList.toggle('hidden', !showBanner);
+  if(showBanner){
+    $('#gcBannerText').textContent = calErr ? calErr.error
+      : (/not signed in/i.test(gcTrouble) ? 'Your Classroom classes are not showing yet.' : gcTrouble);
+    $('#btnGcBanner').classList.toggle('hidden', !CFG.hasGoogle || CFG.hasFeed);
+  }
+
   const shown = applyFilter(items);
   $('#aCount').textContent = shown.length + ' shown';
   renderBoard($('#allBoard'), shown, true);
@@ -756,7 +951,10 @@ function openCourse(key){
   $('#dSrc').style.setProperty('--spine', SRC[c.source].color);
   $('#dName').textContent = c.name;
   const g = $('#dGrade');
-  if(c.score == null){ g.className='gradeval mono none'; g.textContent='No grade yet'; }
+  if(c.score == null){
+    g.className='gradeval mono none';
+    g.textContent = c.calendar ? 'Due dates only' : 'No grade yet';
+  }
   else { g.className='gradeval mono'; g.innerHTML = pctText(c.score) + '<small>%' + (c.letter?' '+esc(c.letter):'') + '</small>'; }
   const miss = (c.items||[]).filter(i=>i.status==='missing').length;
   $('#dTally').innerHTML = (c.items||[]).length + ' items · ' + (miss ? '<i>'+miss+' missing</i>' : 'none missing');
@@ -778,18 +976,27 @@ function setStamp(txt){ $('#stamp').textContent = txt; }
 
 async function loadAll(){
   if(demoMode) return;
-  if(!CFG.hasCanvas && !CFG.hasGoogle){ show('viewSetup'); return; }
+  if(!CFG.hasCanvas && !CFG.hasGoogle && !CFG.hasCalendars && !CFG.hasFeed){ show('viewSetup'); return; }
   $('#btnRefresh').disabled = true;
   setStamp('Loading…');
   const problems = [];
   const results = [];
+  gcTrouble = null;
   if(CFG.hasCanvas){
     try{ results.push(...await loadCanvas()); }
     catch(e){ problems.push('Canvas: ' + e.message); }
   }
+  if(CFG.hasFeed){
+    try{ results.push(...await loadFeed()); }
+    catch(e){ problems.push('Classroom feed: ' + e.message); gcTrouble = e.message; }
+  }
+  if(CFG.hasCalendars){
+    try{ results.push(...await loadCalendars()); }
+    catch(e){ problems.push('Class calendars: ' + e.message); }
+  }
   if(CFG.hasGoogle){
     try{ results.push(...await loadGoogle()); }
-    catch(e){ problems.push('Classroom: ' + e.message); }
+    catch(e){ problems.push('Classroom: ' + e.message); gcTrouble = e.message; }
   }
   COURSES = results;
   $('#btnRefresh').disabled = false;
@@ -842,6 +1049,9 @@ function fillForm(){
   $('#cvTok').value = CFG.cvTok;
   $('#cvProxy').value = CFG.cvProxy;
   $('#gcId').value = CFG.gcId;
+  $('#gcIcs').value = CFG.icsList.join('\n');
+  $('#gcFeed').value = CFG.feedUrl;
+  $('#gcFeedKey').value = CFG.feedKey;
   $('#originHelp').textContent = 'Add ' + location.origin + ' as an authorized JavaScript origin in Google Cloud.';
 
   $('#relayOnly').classList.toggle('hidden', IS_EXT);
@@ -851,10 +1061,10 @@ function fillForm(){
   if(IS_EXT){
     $('#cvIntro').textContent = 'Your address and token are all this needs. Running as an extension means the browser lets it read Canvas directly, so there is nothing else to set up.';
     $('#gcIntro').textContent = 'Classroom needs a free client ID from Google, tied to this extension. Skip it if you only use Canvas.';
-    const on = CFG.hasGoogle;
-    $('#gcExtState').className = 'status ' + (on ? 'on' : 'off');
-    $('#gcExtState').textContent = on ? 'connected' : 'not connected';
   }
+  const gcOn = !!gToken && !gcTrouble;
+  $('#gcExtState').className = 'status ' + (gcOn ? 'on' : 'off');
+  $('#gcExtState').textContent = gcOn ? 'connected' : 'not connected';
 }
 
 /* In extension mode Chrome asks permission per site, at the moment you save. */
@@ -990,6 +1200,9 @@ $('#btnSave').addEventListener('click', async () => {
   store.set('cb.cvTok', $('#cvTok').value.trim());
   store.set('cb.cvProxy', $('#cvProxy').value.trim().replace(/\/+$/,''));
   store.set('cb.gcId', $('#gcId').value.trim());
+  store.set('cb.feed', $('#gcFeed').value.trim());
+  store.set('cb.feedKey', $('#gcFeedKey').value.trim());
+  store.set('cb.ics', $('#gcIcs').value.split('\n').map(x=>x.trim()).filter(Boolean).join('\n'));
   demoMode = false; gToken = null;
   if(base && !ok){
     alert('Chrome was not allowed to read ' + base + ', so Canvas cannot load. Save again and choose Allow.');
@@ -998,22 +1211,34 @@ $('#btnSave').addEventListener('click', async () => {
   loadAll();
 });
 
-$('#btnGcExt').addEventListener('click', async () => {
-  const b = $('#btnGcExt'); b.disabled = true;
+async function connectClassroom(btn){
+  btn.disabled = true;
   try{
+    if(!IS_EXT){
+      const id = $('#gcId') ? $('#gcId').value.trim() : '';
+      if(id) store.set('cb.gcId', id);
+      if(!CFG.gcId) throw new Error('Add your Google client ID in Settings first.');
+    }
+    gToken = null;
     await googleSignIn(true);
-    store.set('cb.gcExt','1');
+    if(IS_EXT) store.set('cb.gcExt','1');
+    gcTrouble = null;
     fillForm();
-    loadAll();
+    await loadAll();
   }catch(e){
-    store.del('cb.gcExt'); fillForm();
+    if(IS_EXT) store.del('cb.gcExt');
+    gcTrouble = e.message;
+    fillForm();
     alert(e.message);
-  }finally{ b.disabled = false; }
-});
+  }finally{ btn.disabled = false; }
+}
+
+$('#btnGcExt').addEventListener('click', e => connectClassroom(e.currentTarget));
+$('#btnGcBanner').addEventListener('click', e => connectClassroom(e.currentTarget));
 
 $('#btnClear').addEventListener('click', () => {
   if(!confirm('This removes your Canvas token and settings from this browser. Continue?')) return;
-  ['cb.cvUrl','cb.cvTok','cb.cvProxy','cb.gcId','cb.gcExt','cb.last'].forEach(k => store.del(k));
+  ['cb.cvUrl','cb.cvTok','cb.cvProxy','cb.gcId','cb.gcExt','cb.ics','cb.feed','cb.feedKey','cb.last'].forEach(k => store.del(k));
   COURSES = []; demoMode = false; gToken = null;
   fillForm(); setStamp(''); show('viewSetup');
 });
@@ -1026,7 +1251,7 @@ $('#filters').addEventListener('click', e => {
 });
 
 fillForm();
-if(CFG.hasCanvas || CFG.hasGoogle) loadAll(); else show('viewSetup');
+if(CFG.hasCanvas || CFG.hasGoogle || CFG.hasCalendars || CFG.hasFeed) loadAll(); else show('viewSetup');
 </script>
 </body>
 </html>
