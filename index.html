@@ -12,236 +12,300 @@
 <meta name="description" content="Canvas and Google Classroom in one place.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@700;900&family=Roboto:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
+/* Canvas's own palette, with a Better-Canvas style dark mode */
 :root{
-  --bg:#E9EDF3; --surface:#FFFFFF; --surface-2:#F4F6FA; --line:#D6DDE8;
-  --ink:#10151E; --ink-2:#46516A; --muted:#78839A;
-  --primary:#23408E; --primary-soft:#E4E9F6;
-  --canvas:#C0392B; --gc:#1E7F45;
-  --danger:#B22234; --danger-soft:#FBE9EA;
-  --ok:#157347; --ok-soft:#E6F2EA;
-  --warn:#9A5B08; --warn-soft:#FBF0DF;
-  --radius:10px;
-  --shadow:0 1px 2px rgba(16,21,30,.05), 0 6px 16px -10px rgba(16,21,30,.18);
-  --display:"Space Grotesk", system-ui, sans-serif;
-  --body:"IBM Plex Sans", system-ui, sans-serif;
+  --bg:#F5F5F5; --surface:#FFFFFF; --surface-2:#F5F7F8; --surface-3:#EEF1F3;
+  --line:#C7CDD1; --line-soft:#E1E5E8;
+  --ink:#2D3B45; --ink-2:#4A5B68; --muted:#6B7780;
+  --primary:#0374B5; --primary-soft:#E3F1F9;
+  --danger:#D01A2B; --danger-soft:#FBE9EB;
+  --ok:#0B874B; --ok-soft:#E4F3EA;
+  --warn:#C55208; --warn-soft:#FCEEE3;
+  --radius:8px;
+  --shadow:0 1px 2px rgba(45,59,69,.08), 0 4px 12px -8px rgba(45,59,69,.22);
+  --shadow-lift:0 2px 6px rgba(45,59,69,.14), 0 12px 26px -14px rgba(45,59,69,.35);
+  --head:"Lato", system-ui, sans-serif;
+  --ui:"Roboto", system-ui, sans-serif;
   --mono:"IBM Plex Mono", ui-monospace, monospace;
+  --banner-ink:#FFFFFF;
 }
-@media (prefers-color-scheme: dark){
+@media (prefers-color-scheme:dark){
   :root{
-    --bg:#0E1218; --surface:#171C25; --surface-2:#1F2632; --line:#2B3441;
-    --ink:#EDF1F7; --ink-2:#AEB9CB; --muted:#7C8798;
-    --primary:#8FAAF0; --primary-soft:#1D2740;
-    --canvas:#E4695C; --gc:#4FB37A;
-    --danger:#EE7A81; --danger-soft:#331B1F;
-    --ok:#5CBB86; --ok-soft:#16281E;
-    --warn:#E0A45C; --warn-soft:#33260F;
-    --primary-soft:#1D2740;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -12px rgba(0,0,0,.7);
+    --bg:#15181C; --surface:#1F2429; --surface-2:#262C32; --surface-3:#2E353C;
+    --line:#39424A; --line-soft:#2C333A;
+    --ink:#E6EAED; --ink-2:#B4BEC6; --muted:#828E98;
+    --primary:#4DABDF; --primary-soft:#12303F;
+    --danger:#F0808C; --danger-soft:#33191D;
+    --ok:#5CBE86; --ok-soft:#15291F;
+    --warn:#E8A162; --warn-soft:#32251492;
+    --warn-soft:#322514;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 6px 16px -10px rgba(0,0,0,.8);
+    --shadow-lift:0 3px 8px rgba(0,0,0,.55), 0 16px 30px -16px rgba(0,0,0,.9);
   }
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
-body{
-  background:var(--bg); color:var(--ink); font-family:var(--body);
-  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
-  padding-bottom:64px;
-}
-button,input,select{font-family:inherit;font-size:inherit;color:inherit}
-button{cursor:pointer}
+body{background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:14px;line-height:1.5;
+  -webkit-font-smoothing:antialiased;padding-bottom:60px}
+button,input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
+button{cursor:pointer;background:none;border:0;padding:0;color:inherit}
 a{color:var(--primary)}
-.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 20px}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.hidden{display:none !important}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
 
 /* ---------- masthead ---------- */
-.masthead{border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:40}
-.masthead .wrap{display:flex;align-items:center;gap:16px;height:60px}
-.brand{font-family:var(--display);font-weight:700;font-size:19px;letter-spacing:-.02em;margin-right:auto;display:flex;align-items:baseline;gap:10px}
-.brand span{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
-.iconbtn{background:none;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:13px;font-weight:500;color:var(--ink-2);display:inline-flex;align-items:center;gap:7px}
-.iconbtn:hover{border-color:var(--muted);color:var(--ink)}
+.masthead{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:60}
+.masthead .wrap{display:flex;align-items:center;gap:14px;height:56px}
+.brand{font-family:var(--head);font-weight:900;font-size:19px;letter-spacing:-.01em;margin-right:auto;
+  display:flex;align-items:baseline;gap:9px}
+.brand span{font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.14em;
+  color:var(--muted);text-transform:uppercase}
+.iconbtn{border:1px solid var(--line);border-radius:4px;padding:7px 12px;font-size:13px;font-weight:500;
+  color:var(--ink-2);display:inline-flex;align-items:center;gap:7px;background:var(--surface)}
+.iconbtn:hover{background:var(--surface-2);color:var(--ink)}
 .iconbtn:disabled{opacity:.5;cursor:default}
-.stamp{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.02em}
-@media (max-width:640px){ .stamp{display:none} .masthead .wrap{gap:8px} }
+.stamp{font-family:var(--mono);font-size:11px;color:var(--muted)}
+@media (max-width:660px){.stamp{display:none}.masthead .wrap{gap:8px}}
 
 /* ---------- readouts ---------- */
-.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
-  border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin:22px 0}
-.readout{background:var(--surface);padding:14px 16px}
-.readout b{display:block;font-family:var(--mono);font-size:26px;font-weight:600;line-height:1.1;letter-spacing:-.02em}
-.readout small{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
-.readout.is-alert b{color:var(--danger)}
+.readouts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.readout{background:var(--surface);border:1px solid var(--line-soft);border-left:3px solid var(--muted);
+  border-radius:var(--radius);padding:12px 15px;box-shadow:var(--shadow)}
+.readout b{display:block;font-family:var(--mono);font-size:25px;font-weight:600;line-height:1.15}
+.readout small{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted)}
+.readout.r-due{border-left-color:var(--primary)}
+.readout.r-miss{border-left-color:var(--danger)}
+.readout.r-miss b{color:var(--danger)}
+.readout.r-avg{border-left-color:var(--ok)}
 
 /* ---------- section head ---------- */
-.sectionhead{display:flex;align-items:center;gap:12px;margin:26px 0 12px}
-.sectionhead h2{font-family:var(--display);font-size:14px;font-weight:600;letter-spacing:.02em;margin:0}
-.sectionhead .rule{flex:1;height:1px;background:var(--line)}
+.sectionhead{display:flex;align-items:center;gap:10px;margin:24px 0 12px;flex-wrap:wrap}
+.sectionhead h2{font-family:var(--head);font-size:17px;font-weight:700;margin:0;letter-spacing:-.01em}
+.sectionhead .rule{flex:1;height:1px;background:var(--line-soft);min-width:20px}
 .sectionhead .count{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.tinybtn{border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:12px;
+  color:var(--ink-2);background:var(--surface)}
+.tinybtn:hover{background:var(--surface-2);color:var(--ink)}
+.tinybtn[aria-pressed="true"]{background:var(--primary);border-color:var(--primary);color:#fff}
 
-/* ---------- course grid ---------- */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
-.card{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-  padding:15px 16px 14px 19px;text-align:left;width:100%;overflow:hidden;box-shadow:var(--shadow);
-  transition:transform .12s ease, border-color .12s ease}
-.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--spine,var(--muted))}
-.card:hover{transform:translateY(-2px);border-color:var(--muted)}
-.card .src{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--spine,var(--muted));font-weight:600}
-.card h3{font-family:var(--display);font-size:15px;font-weight:600;margin:5px 0 2px;line-height:1.28;letter-spacing:-.01em}
-.card .sub{font-size:12px;color:var(--muted);margin-bottom:12px;min-height:1em}
-.card .foot{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
-.gradeval{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1;letter-spacing:-.03em}
-.gradeval small{font-size:14px;font-weight:400;color:var(--muted)}
-.gradeval.none{font-size:15px;color:var(--muted);font-weight:400}
+/* ---------- class cards, Google Classroom shape ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(258px,1fr));gap:16px;align-items:start}
+.card{position:relative;background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow);text-align:left;width:100%;display:block;
+  transition:box-shadow .16s ease, transform .16s ease}
+.card:hover{box-shadow:var(--shadow-lift)}
+.card.dragging{opacity:.25}
+.card.floating{position:fixed;z-index:900;pointer-events:none;box-shadow:var(--shadow-lift);
+  transform:rotate(1.2deg) scale(1.02);opacity:.97;margin:0}
+.card-ph{border:2px dashed var(--line);border-radius:var(--radius);background:var(--surface-2)}
+.banner{position:relative;min-height:100px;padding:13px 46px 10px 15px;
+  background:var(--cardcolor,#0374B5);display:flex;flex-direction:column;gap:6px}
+.banner h3{font-family:var(--head);font-weight:700;font-size:17px;line-height:1.25;margin:0;
+  color:var(--banner-ink);word-break:break-word;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.banner .sec{font-size:12px;line-height:1.35;color:var(--banner-ink);opacity:.85;margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.banner .src{margin-top:auto;font-family:var(--mono);font-size:8.5px;line-height:1.4;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--banner-ink);opacity:.75}
+.banner .pd{position:absolute;right:15px;bottom:10px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--banner-ink);opacity:.9;
+  border:1px solid rgba(255,255,255,.45);border-radius:3px;padding:1px 5px}
+.kebab{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:var(--banner-ink);opacity:.85;font-size:17px;line-height:1}
+.kebab:hover{background:rgba(255,255,255,.22);opacity:1}
+.grip{position:absolute;top:8px;right:40px;width:26px;height:30px;display:flex;align-items:center;
+  justify-content:center;color:var(--banner-ink);opacity:0;font-size:14px;cursor:grab;letter-spacing:-1px}
+.card:hover .grip{opacity:.75}
+.grip:active{cursor:grabbing}
+.grip{touch-action:none}
+@media (hover:none){ .grip{opacity:.75} }
+.cardbody{padding:13px 15px 12px;display:flex;align-items:flex-end;justify-content:space-between;gap:10px;
+  min-height:66px;border-top:1px solid var(--line-soft)}
+.gradeval{font-family:var(--mono);font-size:27px;font-weight:600;line-height:1.1}
+.gradeval small{font-size:13px;font-weight:400;color:var(--muted)}
+.gradeval.none{font-size:13px;color:var(--muted);font-weight:400;line-height:1.4}
 .tally{font-family:var(--mono);font-size:11px;color:var(--ink-2);text-align:right;line-height:1.6}
 .tally i{font-style:normal;color:var(--danger);font-weight:600}
 
-/* ---------- filters ---------- */
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
-.chip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 13px;
-  font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
-.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+/* ---------- card menu ---------- */
+.menu{position:fixed;z-index:950;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow-lift);padding:12px;width:250px}
+.menu h4{font-family:var(--head);font-size:13px;margin:0 0 9px;font-weight:700}
+.menu input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:4px;
+  background:var(--surface-2);font-size:13px}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0 12px}
+.sw{width:100%;aspect-ratio:1;border-radius:50%;border:2px solid transparent}
+.sw[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--surface) inset}
+.menu .row{display:flex;gap:7px}
+.menu .row button{flex:1;border:1px solid var(--line);border-radius:4px;padding:7px;font-size:12.5px;
+  color:var(--ink-2);background:var(--surface)}
+.menu .row button:hover{background:var(--surface-2);color:var(--ink)}
+.menu .row button.main{background:var(--primary);border-color:var(--primary);color:#fff}
+.menu .row button.main:hover{filter:brightness(1.08)}
 
-/* ---------- the due-rail: signature ---------- */
-.board{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-.daybar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:var(--surface-2);border-bottom:1px solid var(--line);border-top:1px solid var(--line)}
+/* ---------- filters + board ---------- */
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.chip{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:5px 13px;
+  font-size:12px;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.board{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow)}
+.daybar{display:flex;align-items:center;gap:9px;padding:7px 15px;background:var(--surface-2);
+  border-bottom:1px solid var(--line-soft);border-top:1px solid var(--line-soft)}
 .daybar:first-child{border-top:none}
-.daybar b{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
-.daybar span{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.row{display:grid;grid-template-columns:74px 1fr auto;gap:14px;align-items:center;
-  padding:11px 16px;border-top:1px solid var(--line);text-align:left;width:100%;background:none;border-left:0;border-right:0;border-bottom:0}
+.daybar b{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.09em;text-transform:uppercase}
+.row{display:grid;grid-template-columns:72px 1fr auto;gap:13px;align-items:center;padding:11px 15px;
+  border-top:1px solid var(--line-soft);text-align:left;width:100%}
 .row:first-child{border-top:none}
 .row:hover{background:var(--surface-2)}
-.rail{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.05em;text-align:center;
-  padding:5px 0;border-radius:6px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
+.rail{font-family:var(--mono);font-size:10.5px;font-weight:600;line-height:1;height:26px;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  border-radius:4px;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap}
 .rail.now{background:var(--ink);border-color:var(--ink);color:var(--surface)}
 .rail.late{background:var(--danger-soft);border-color:transparent;color:var(--danger)}
-.rail.done{background:transparent;border-color:transparent;color:var(--muted)}
 .rail.soon{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
-.main .t{font-weight:500;line-height:1.35;letter-spacing:-.005em}
-.main .m{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 9px}
-.main .m em{font-style:normal;color:var(--spine,var(--muted));font-weight:600;letter-spacing:.08em;text-transform:uppercase;font-size:9.5px}
-.right{display:flex;align-items:center;gap:12px}
-.pts{font-family:var(--mono);font-size:13px;font-weight:600;white-space:nowrap}
+.rail.done{background:transparent;border-color:transparent;color:var(--muted)}
+.main .t{font-weight:500;line-height:1.35;color:var(--primary)}
+.row:hover .main .t{text-decoration:underline}
+.main .m{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.5;
+  display:flex;flex-wrap:wrap;gap:3px 9px;align-items:center}
+.dotcol{width:8px;height:8px;border-radius:50%;background:var(--cardcolor,var(--muted));display:inline-block}
+.right{display:flex;align-items:center;gap:11px}
+.pts{font-family:var(--mono);font-size:12.5px;font-weight:600;white-space:nowrap;line-height:1;
+  height:20px;display:flex;align-items:center;justify-content:flex-end;overflow:hidden}
 .pts small{font-weight:400;color:var(--muted)}
-.pts.empty{color:var(--muted);font-weight:400}
-.pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;
-  padding:3px 8px;border-radius:5px;white-space:nowrap}
+.pts.none{color:var(--muted);font-weight:400}
+.pill{font-family:var(--mono);font-size:9px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;
+  border-radius:3px;white-space:nowrap;line-height:1;height:20px;padding:0 7px;
+  display:inline-flex;align-items:center;overflow:hidden}
 .pill.graded{background:var(--ok-soft);color:var(--ok)}
 .pill.submitted{background:var(--primary-soft);color:var(--primary)}
 .pill.missing{background:var(--danger-soft);color:var(--danger)}
 .pill.late{background:var(--warn-soft);color:var(--warn)}
-.pill.todo{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
-.pill.excused{background:var(--surface-2);color:var(--muted)}
-.pill.past{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
-@media (max-width:640px){
-  .row{grid-template-columns:60px 1fr;gap:11px;padding:11px 13px}
+.pill.todo,.pill.past,.pill.excused{background:var(--surface-3);color:var(--muted)}
+@media (max-width:660px){
+  .row{grid-template-columns:58px 1fr;gap:10px;padding:10px 12px}
   .right{grid-column:2;justify-content:flex-start;margin-top:2px}
-  .readouts{grid-template-columns:1fr 1fr 1fr}
-  .readout b{font-size:21px}
+  .readouts{grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .readout b{font-size:20px}
 }
 
-/* ---------- course detail ---------- */
-.crumb{background:none;border:0;padding:0;margin:20px 0 0;font-family:var(--mono);font-size:11px;
-  letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+/* ---------- course page ---------- */
+.coursehead{border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);margin:16px 0 0}
+.coursehead .top{background:var(--cardcolor,#0374B5);padding:22px 22px 20px;position:relative}
+.coursehead h1{font-family:var(--head);font-size:26px;font-weight:900;margin:0;color:var(--banner-ink);
+  line-height:1.18;letter-spacing:-.015em;max-width:70%}
+.coursehead .sec{color:var(--banner-ink);opacity:.85;font-size:13px;margin-top:4px}
+.coursehead .gradebox{position:absolute;right:22px;bottom:18px;text-align:right;color:var(--banner-ink)}
+.coursehead .gradebox b{font-family:var(--mono);font-size:30px;font-weight:600;line-height:1;display:block}
+.coursehead .gradebox span{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.tabs{display:flex;gap:0;background:var(--surface);border:1px solid var(--line-soft);border-top:0;
+  overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:11px 16px;font-size:13px;font-weight:500;color:var(--ink-2);white-space:nowrap;
+  border-bottom:3px solid transparent}
+.tab:hover{background:var(--surface-2);color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--primary);border-bottom-color:var(--primary);font-weight:700}
+.tab em{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:5px}
+.crumb{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin:18px 0 0;display:inline-block}
 .crumb:hover{color:var(--ink)}
-.detailhead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:10px 0 20px}
-.detailhead h1{font-family:var(--display);font-size:25px;font-weight:600;letter-spacing:-.025em;margin:6px 0 0;max-width:640px;line-height:1.2}
-.detailhead .src{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--spine,var(--muted));font-weight:600}
+.post{display:grid;grid-template-columns:34px 1fr;gap:13px;padding:13px 15px;
+  border-top:1px solid var(--line-soft);text-align:left;width:100%;align-items:start}
+.post:first-child{border-top:none}
+.post:hover{background:var(--surface-2)}
+.ic{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:15px;background:var(--surface-3);color:var(--ink-2)}
+.ic.announcement{background:var(--warn-soft);color:var(--warn)}
+.ic.discussion{background:var(--primary-soft);color:var(--primary)}
+.ic.material{background:var(--ok-soft);color:var(--ok)}
+.post .t{font-weight:500;color:var(--primary);line-height:1.35}
+.post:hover .t{text-decoration:underline}
+.post .m{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.post .p{font-size:12.5px;color:var(--ink-2);margin-top:5px;line-height:1.5;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.loading{padding:26px;text-align:center;color:var(--muted);font-size:13px}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13.5px}
 
 /* ---------- setup ---------- */
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin:18px 0;box-shadow:var(--shadow)}
-.panel h2{font-family:var(--display);font-size:17px;margin:0 0 4px;letter-spacing:-.01em}
-.panel > p{color:var(--ink-2);margin:0 0 18px;font-size:14px;max-width:62ch}
-.field{margin-bottom:14px}
-.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
-.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;
-  background:var(--surface-2);font-family:var(--mono);font-size:12px;min-height:74px;resize:vertical;line-height:1.5}
-.field textarea:focus{outline:2px solid var(--primary);outline-offset:-1px;background:var(--surface)}
-.subhead{font-family:var(--display);font-size:13px;font-weight:600;margin:20px 0 3px;letter-spacing:-.005em}
-.subhead .tag{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
-  background:var(--ok-soft);color:var(--ok);padding:2px 6px;border-radius:4px;margin-left:7px;vertical-align:1px}
-.subhead .tag.alt{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
-.field input{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:7px;background:var(--surface-2);font-family:var(--mono);font-size:13px}
-.field input:focus{outline:2px solid var(--primary);outline-offset:-1px;background:var(--surface)}
-.field .help{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.45}
-.btn{background:var(--ink);color:var(--surface);border:0;border-radius:8px;padding:10px 18px;font-weight:600;font-size:14px}
-.btn:hover{opacity:.88}
-.btn.ghost{background:none;color:var(--ink-2);border:1px solid var(--line)}
-.btn.ghost:hover{color:var(--ink);border-color:var(--muted)}
-.btnrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:6px}
-.status{font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:5px}
-.status.on{background:var(--ok-soft);color:var(--ok)}
-.status.off{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
-details.acc{border-top:1px solid var(--line);margin-top:16px;padding-top:12px}
-details.acc summary{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer}
-details.acc ol{font-size:13.5px;color:var(--ink-2);line-height:1.65;padding-left:20px;margin:12px 0 0}
-details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
-
-.intro{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
-  padding:22px;margin:22px 0 18px;box-shadow:var(--shadow)}
-.intro h1{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
-.intro p{color:var(--ink-2);margin:0 0 14px;max-width:64ch;font-size:14px}
+.intro{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);
+  padding:22px;margin:20px 0 16px;box-shadow:var(--shadow)}
+.intro h1{font-family:var(--head);font-size:23px;font-weight:900;margin:0 0 6px;letter-spacing:-.015em}
+.intro p{color:var(--ink-2);margin:0 0 14px;max-width:64ch}
 .intro p.mini{font-size:12.5px;color:var(--muted);margin:14px 0 0}
-.strip{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
-  border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.strip{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);
+  border:1px solid var(--line-soft);border-radius:6px;overflow:hidden}
 .strip-item{background:var(--surface-2);padding:10px 13px}
-.strip-item b{display:block;font-family:var(--display);font-size:13px;font-weight:600}
-.strip-item span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.strip-item b{display:block;font-family:var(--head);font-size:13px;font-weight:700}
+.strip-item span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .strip-item.on{background:var(--ok-soft)} .strip-item.on span{color:var(--ok)}
+.panel{background:var(--surface);border:1px solid var(--line-soft);border-radius:var(--radius);
+  padding:22px;margin:16px 0;box-shadow:var(--shadow)}
+.panel h2{font-family:var(--head);font-size:17px;margin:0 0 4px;font-weight:700}
+.panel > p{color:var(--ink-2);margin:0 0 16px;max-width:62ch}
+.field{margin-bottom:14px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.field input,.field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:4px;
+  background:var(--surface-2);font-family:var(--mono);font-size:12.5px}
+.field textarea{min-height:74px;resize:vertical;line-height:1.5}
+.field input:focus,.field textarea:focus{outline:2px solid var(--primary);outline-offset:-1px;background:var(--surface)}
+.field .help{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.5}
 .hint{font-family:var(--mono);font-size:11.5px;margin-top:5px;color:var(--ok);min-height:1em}
 .hint.warn{color:var(--warn)}
-.linkbtn{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
-  text-transform:uppercase;border:1px solid var(--line);border-radius:7px;padding:6px 11px;
-  text-decoration:none;color:var(--ink-2)}
-.linkbtn:hover{border-color:var(--muted);color:var(--ink)}
-.alert{border:1px solid var(--danger);border-left-width:3px;background:var(--danger-soft);
-  border-radius:8px;padding:13px 15px;margin:0 0 18px;display:flex;gap:14px;
-  align-items:center;flex-wrap:wrap}
-.alert div{flex:1;min-width:230px;font-size:13.5px;line-height:1.5;color:var(--ink)}
-.alert b{display:block;font-family:var(--display);font-size:14px;margin-bottom:3px}
+.subhead{font-family:var(--head);font-size:14px;font-weight:700;margin:20px 0 4px}
+.subhead .tag{font-family:var(--mono);font-size:9px;letter-spacing:.11em;text-transform:uppercase;
+  background:var(--ok-soft);color:var(--ok);padding:2px 6px;border-radius:3px;margin-left:7px;vertical-align:1px}
+.subhead .tag.alt{background:var(--surface-3);color:var(--muted)}
+.btn{background:var(--primary);color:#fff;border-radius:4px;padding:10px 18px;font-weight:600;font-size:14px}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:var(--surface);color:var(--ink-2);border:1px solid var(--line)}
+.btn.ghost:hover{background:var(--surface-2);color:var(--ink);filter:none}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.linkbtn{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--line);border-radius:4px;padding:6px 11px;text-decoration:none;color:var(--ink-2);background:var(--surface)}
+.linkbtn:hover{background:var(--surface-2);color:var(--ink)}
+.status{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:3px}
+.status.on{background:var(--ok-soft);color:var(--ok)}
+.status.off{background:var(--surface-3);color:var(--muted)}
+details.acc{border-top:1px solid var(--line-soft);margin-top:16px;padding-top:12px}
+details.acc summary{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer}
+details.acc ol{font-size:13px;color:var(--ink-2);line-height:1.65;padding-left:20px;margin:12px 0 0}
 details.acc ol li{margin-bottom:5px}
-details.acc ol ul{margin:5px 0 0;padding-left:18px}
-.diag{margin-top:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
-.diag .step{display:flex;gap:11px;padding:10px 13px;border-top:1px solid var(--line);font-size:13px;align-items:flex-start}
+details.acc code,.help code,.intro code{font-family:var(--mono);font-size:11.5px;background:var(--surface-3);
+  padding:1px 5px;border-radius:3px}
+.notice{border:1px solid var(--line-soft);border-left:3px solid var(--warn);background:var(--surface);
+  border-radius:5px;padding:11px 14px;font-size:12.5px;color:var(--ink-2);margin:14px 0;line-height:1.5}
+.notice b{color:var(--ink)}
+.alert{border:1px solid var(--danger);border-left-width:3px;background:var(--danger-soft);border-radius:6px;
+  padding:13px 15px;margin:0 0 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.alert div{flex:1;min-width:230px;font-size:13px;line-height:1.5;color:var(--ink)}
+.alert b{display:block;font-family:var(--head);font-size:14px;margin-bottom:3px}
+.diag{margin-top:14px;border:1px solid var(--line-soft);border-radius:6px;overflow:hidden}
+.diag .step{display:flex;gap:11px;padding:10px 13px;border-top:1px solid var(--line-soft);font-size:13px;align-items:flex-start}
 .diag .step:first-child{border-top:0}
 .diag .step b{font-family:var(--mono);font-size:13px;flex:0 0 14px;line-height:1.45}
-.diag .pass b{color:var(--ok)}
-.diag .fail b{color:var(--danger)}
-.diag .wait b{color:var(--muted)}
+.diag .pass b{color:var(--ok)} .diag .fail b{color:var(--danger)} .diag .wait b{color:var(--muted)}
 .diag .fail{background:var(--danger-soft)}
 .diag .step span{color:var(--ink-2);line-height:1.45}
 .diag .step span em{font-style:normal;color:var(--ink);font-weight:600}
-.gbtn{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 12px;
-  background:#FFFFFF;border:1px solid #747775;border-radius:4px;
-  font-family:Roboto,var(--body);font-weight:500;font-size:14px;letter-spacing:.25px;color:#1F1F1F;
-  transition:background .15s ease, box-shadow .15s ease}
+.gbtn{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 12px;background:#FFF;
+  border:1px solid #747775;border-radius:4px;font-family:Roboto,var(--ui);font-weight:500;font-size:14px;
+  letter-spacing:.25px;color:#1F1F1F}
 .gbtn:hover{background:#F7F8F8;box-shadow:0 1px 3px rgba(60,64,67,.28)}
-.gbtn:disabled{opacity:.55;cursor:default;box-shadow:none;background:#FFFFFF}
+.gbtn:disabled{opacity:.55;cursor:default}
 .gbtn svg{display:block;flex:0 0 18px}
 @media (prefers-color-scheme:dark){
   .gbtn{background:#131314;border-color:#8E918F;color:#E3E3E3}
   .gbtn:hover{background:#1B1B1C}
-  .gbtn:disabled{background:#131314}
 }
-.alertbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:20px 0 0;
-  padding:13px 16px;border-radius:var(--radius);border:1px solid var(--line);
-  border-left:4px solid var(--muted);background:var(--surface);box-shadow:var(--shadow)}
-.alertbar.bad{border-left-color:var(--danger);background:var(--danger-soft)}
-.alertbar.warn{border-left-color:var(--warn);background:var(--warn-soft)}
-.alertbar .ab-text{flex:1;min-width:210px;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
-.alertbar .ab-text b{display:block;font-family:var(--display);font-size:14px;color:var(--ink);margin-bottom:2px}
-.alertbar .ab-acts{display:flex;gap:8px;flex-wrap:wrap}
-.alertbar .btn{padding:8px 14px;font-size:13px}
-.alertbar a.btn{text-decoration:none;display:inline-flex;align-items:center}
-.empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:14px}
-.notice{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--surface);
-  border-radius:7px;padding:11px 14px;font-size:13px;color:var(--ink-2);margin:14px 0;line-height:1.5}
-.notice b{color:var(--ink)}
-.hidden{display:none !important}
-:focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:4px}
-@media (prefers-reduced-motion:reduce){*{transition:none !important;animation:none !important}}
 </style>
 </head>
 <body>
@@ -400,7 +464,20 @@ details.acc ol ul{margin:5px 0 0;padding-left:18px}
     </div>
 
     <div class="panel">
-      <h2>3 &middot; Save</h2>
+      <h2>3 &middot; Gemini <span style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:400">optional</span></h2>
+      <p>Classboard reads periods out of your class names on its own and needs no key for it. Add one only if you have classes it can&rsquo;t make sense of &mdash; then <b>Sort by period</b> sends just those leftover names to Gemini.</p>
+      <div class="field">
+        <label for="gemKey">Gemini API key</label>
+        <input id="gemKey" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false">
+        <div class="hint" id="gemHint"></div>
+        <div class="help">Get one at <code>aistudio.google.com/apikey</code>. It is kept in this browser only, exactly like your Canvas token &mdash; never written into <code>index.html</code>, so it never lands in your public repo.</div>
+      </div>
+      <div class="notice"><b>Keys that work start with <code>AIza</code>.</b> If AI Studio only gives you <code>AQ.</code> tokens, that account is restricted to a credential type this API rejects &mdash; common on school Google accounts. A personal Google account will usually issue a normal key.</div>
+      <div class="notice"><b>Never paste a key into <code>index.html</code>.</b> Your repo is public, so anyone could read it out of view-source, and Google and GitHub both scan for exposed keys and revoke them. Your class names go to Google only when you press Sort by period; nothing else is sent.</div>
+    </div>
+
+    <div class="panel">
+      <h2>4 &middot; Save</h2>
       <p>Your settings live in this browser and come back automatically each time you open the page. You only redo this if you clear browsing data or switch device.</p>
       <div class="btnrow">
         <button class="btn" id="btnSave">Save and load</button>
@@ -434,19 +511,27 @@ details.acc ol ul{margin:5px 0 0;padding-left:18px}
       <button class="btn ghost" id="btnFixSettings" style="padding:7px 14px;font-size:13px">Paste it in</button>
     </div>
     <div class="notice hidden" id="gcBanner" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-      <span style="flex:1;min-width:220px" id="gcBannerText">Google Classroom isn't connected.</span>
+      <span style="flex:1;min-width:220px" id="gcBannerText"></span>
       <button class="gbtn" id="btnGcBanner" type="button"><svg width="18" height="18" aria-hidden="true"><use href="#g-logo"/></svg>Sign in with Google</button>
     </div>
+
     <div class="readouts">
-      <div class="readout"><b class="mono" id="rDue">—</b><small>due in 7 days</small></div>
-      <div class="readout is-alert"><b class="mono" id="rMiss">—</b><small>missing</small></div>
-      <div class="readout"><b class="mono" id="rAvg">—</b><small>average grade</small></div>
+      <div class="readout r-due"><b class="mono" id="rDue">&mdash;</b><small>due in 7 days</small></div>
+      <div class="readout r-miss"><b class="mono" id="rMiss">&mdash;</b><small>missing</small></div>
+      <div class="readout r-avg"><b class="mono" id="rAvg">&mdash;</b><small>average grade</small></div>
     </div>
 
-    <div class="sectionhead"><h2>Classes</h2><div class="rule"></div><span class="count" id="cCount"></span></div>
+    <div class="sectionhead">
+      <h2>Classes</h2>
+      <span class="count" id="cCount"></span>
+      <div class="rule"></div>
+      <button class="tinybtn" id="btnPeriod" title="Read period numbers out of your class names and order by them">Sort by period</button>
+      <button class="tinybtn" id="btnResetAll" title="Undo every rename, colour and reorder">Reset all cards</button>
+    </div>
     <div class="grid" id="courseGrid"></div>
+    <p class="mono" id="periodNote" style="font-size:11px;color:var(--muted);margin:10px 0 0"></p>
 
-    <div class="sectionhead"><h2>Everything ahead</h2><div class="rule"></div><span class="count" id="aCount"></span></div>
+    <div class="sectionhead"><h2>Everything ahead</h2><span class="count" id="aCount"></span><div class="rule"></div></div>
     <div class="filters" id="filters">
       <button class="chip" data-f="soon" aria-pressed="true">Due soon</button>
       <button class="chip" data-f="missing" aria-pressed="false">Missing</button>
@@ -454,23 +539,24 @@ details.acc ol ul{margin:5px 0 0;padding-left:18px}
       <button class="chip" data-f="all" aria-pressed="false">All</button>
     </div>
     <div class="board" id="allBoard"></div>
+    <div style="height:36px"></div>
   </section>
 
   <!-- COURSE -->
   <section id="viewCourse" class="hidden">
-    <button class="crumb" id="btnCrumb">← All classes</button>
-    <div class="detailhead">
-      <div>
-        <div class="src" id="dSrc"></div>
+    <button class="crumb" id="btnCrumb">&larr; All classes</button>
+    <div class="coursehead" id="courseHead">
+      <div class="top">
         <h1 id="dName"></h1>
+        <div class="sec" id="dSec"></div>
+        <div class="gradebox"><b id="dGrade"></b><span id="dGradeLabel">grade</span></div>
       </div>
-      <div style="text-align:right">
-        <div class="gradeval mono" id="dGrade"></div>
-        <div class="tally mono" id="dTally"></div>
-      </div>
+      <div class="tabs" id="courseTabs" role="tablist"></div>
     </div>
-    <div class="board" id="courseBoard"></div>
-    <p style="margin:14px 0 40px"><a id="dLink" target="_blank" rel="noopener" class="mono" style="font-size:12px">Open this class in its own site ↗</a></p>
+    <div class="board" id="courseBoard" style="border-radius:0 0 var(--radius) var(--radius);border-top:0"></div>
+    <p style="margin:14px 0 40px">
+      <a id="dLink" target="_blank" rel="noopener" class="mono" style="font-size:12px">Open this class in its own site &#8599;</a>
+    </p>
   </section>
 
 </main>
@@ -495,6 +581,7 @@ const CFG = {
   get cvTok(){ return store.get('cb.cvTok') || ''; },
   get cvProxy(){ return store.get('cb.cvProxy') || ''; },
   get gcId(){ return store.get('cb.gcId') || ''; },
+  get geminiKey(){ return store.get('cb.gemKey') || ''; },
   get feedUrl(){ return store.get('cb.feed') || ''; },
   get feedKey(){ return store.get('cb.feedKey') || ''; },
   get hasFeed(){ return !!(this.feedUrl && this.cvProxy); },
@@ -845,11 +932,19 @@ async function loadFeed(){
     });
     let earned = 0, poss = 0;
     items.forEach(i => { if(i.score != null && i.points) { earned += i.score; poss += i.points; } });
+    const posts = (c.posts || []).map(pst => ({
+      id:'feed-post-'+pst.id, kind:pst.kind || 'material',
+      title:pst.title || 'Untitled',
+      at: pst.at ? new Date(pst.at) : null,
+      author:'', preview:String(pst.preview || '').replace(/\s+/g,' ').trim().slice(0,220),
+      url:pst.link || c.link, replies:0
+    }));
     return {
       key:'feed-'+c.id, source:'feed', id:c.id,
       name:c.name, section:c.section || '',
       score: poss ? (earned/poss)*100 : null, letter:null,
-      url:c.link, items, error:c.error
+      url:c.link, items, posts, extrasDone:true,
+      error:c.error, postsError:c.postsError
     };
   });
 }
@@ -937,11 +1032,229 @@ async function pool(list, n, fn){
  * render
  * ------------------------------------------------------------------ */
 const SRC = {
-  canvas:{label:'Canvas', color:'var(--canvas)'},
-  gc:{label:'Classroom', color:'var(--gc)'},
-  ics:{label:'Class calendar', color:'var(--gc)'},
-  feed:{label:'Classroom', color:'var(--gc)'}
+  canvas:{label:'Canvas'}, gc:{label:'Classroom'}, ics:{label:'Class calendar'}, feed:{label:'Classroom'}
 };
+
+/* Twelve well-separated hues, handed out in turn so no two classes
+   start the same colour. */
+const PALETTE = ['#0374B5','#00796B','#0F9D58','#E8710A','#C5221F','#8E24AA',
+                 '#3F51B5','#795548','#546E7A','#D81B60','#0097A7','#B26500'];
+
+/* ------------------------------------------------------------------ *
+ * Per-card settings: colour, nickname, position. Kept apart from the
+ * course data so a refresh never wipes what you chose.
+ * ------------------------------------------------------------------ */
+function loadCards(){
+  try{ return JSON.parse(store.get('cb.cards') || '{}') || {}; }catch(e){ return {}; }
+}
+function saveCards(c){ store.set('cb.cards', JSON.stringify(c)); }
+let CARDS = loadCards();
+
+function cardOf(course){
+  const c = CARDS[course.key] || {};
+  return {
+    name: c.name || course.name,
+    color: c.color || defaultColor(course),
+    order: typeof c.order === 'number' ? c.order : null,
+    renamed: !!c.name,
+    recolored: !!c.color
+  };
+}
+function defaultColor(course){
+  const i = COURSES.findIndex(x => x.key === course.key);
+  return PALETTE[(i < 0 ? 0 : i) % PALETTE.length];
+}
+function setCard(key, patch){
+  CARDS[key] = Object.assign({}, CARDS[key], patch);
+  Object.keys(CARDS[key]).forEach(k => { if(CARDS[key][k] == null) delete CARDS[key][k]; });
+  if(!Object.keys(CARDS[key]).length) delete CARDS[key];
+  saveCards(CARDS);
+}
+
+/* White text on dark banners, dark text on light ones. */
+function readableOn(hex){
+  const h = String(hex||'').replace('#','');
+  if(h.length !== 6) return '#FFFFFF';
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return (0.299*r + 0.587*g + 0.114*b) > 165 ? '#1B2733' : '#FFFFFF';
+}
+
+/* ------------------------------------------------------------------ *
+ * Period reader. Pattern matching, not a language model — a page
+ * served as a static file has no safe place to keep an API key.
+ * ------------------------------------------------------------------ */
+const ROMAN = { i:1, ii:2, iii:3, iv:4, v:5, vi:6, vii:7, viii:8, ix:9, x:10 };
+
+function readPeriod(text){
+  const t = ' ' + String(text||'').toLowerCase()
+    .replace(/[_\-\u2013\u2014\/|]+/g,' ')
+    .replace(/[()\[\]{}:#]/g,' ')
+    .replace(/\s+/g,' ') + ' ';
+  let m;
+
+  /* zero period is a real thing at a lot of schools */
+  if(/\b(?:zero|0)\s*(?:period|hour|hr|block)\b/.test(t)) return 0;
+
+  /* "period 3", "per. 3", "pd7", "prd 3" */
+  if((m = /\b(?:periods?|per|pd|prd)\.?\s*(\d{1,2})\b/.exec(t))) return +m[1];
+  /* "period iv" */
+  if((m = /\b(?:periods?|per|pd|prd)\.?\s*(i{1,3}|iv|vi{0,3}|ix|x|v)\b/.exec(t))) return ROMAN[m[1]];
+  /* "3rd period", "5th hour", "2nd block" */
+  if((m = /\b(\d{1,2})\s*(?:st|nd|rd|th)?\s*(?:periods?|hours?|hrs?|blocks?|mods?)\b/.exec(t))) return +m[1];
+  /* "block 2", "hr 6", "mod 4" */
+  if((m = /\b(?:blocks?|blk|mods?|hours?|hrs?)\.?\s*(\d{1,2})\b/.exec(t))) return +m[1];
+  /* "block b" / "b block" */
+  if((m = /\b(?:blocks?|blk)\s*([a-h])\b/.exec(t))) return m[1].charCodeAt(0) - 96;
+  if((m = /\b([a-h])\s*(?:blocks?|blk)\b/.exec(t))) return m[1].charCodeAt(0) - 96;
+  /* bare "p3" or "p 3" — last, since it's the loosest */
+  if((m = /\bp\.?\s?(\d{1,2})\b/.exec(t))) return +m[1];
+
+  return null;
+}
+
+function loadAiPeriods(){
+  try{ return JSON.parse(store.get('cb.aiPeriods') || '{}') || {}; }catch(e){ return {}; }
+}
+let AI_PERIODS = loadAiPeriods();
+
+/* Order of authority: what you typed, then what Gemini worked out, then
+   what the built-in reader could see in the name. */
+function detectPeriod(course){
+  const manual = (CARDS[course.key] || {}).period;
+  if(typeof manual === 'number') return manual;
+  const guess = readPeriod(course.name);
+  if(guess != null) return guess;
+  const fromSection = readPeriod([course.section, course.code].filter(Boolean).join(' '));
+  if(fromSection != null) return fromSection;
+  const ai = AI_PERIODS[course.key];
+  return typeof ai === 'number' ? ai : null;
+}
+
+/* ------------------------------------------------------------------ *
+ * Optional Gemini pass. Only the class names the reader couldn't parse
+ * get sent, and only when you've supplied your own key.
+ * ------------------------------------------------------------------ */
+const GEMINI_MODELS = ['gemini-2.5-flash','gemini-3.7-flash','gemini-2.0-flash'];
+let geminiModel = null;
+
+function geminiHint(status, body){
+  const t = String(body||'');
+  if(/API_KEY_INVALID|API key not valid/i.test(t))
+    return 'Google rejected that key. Keys that work start with AIza \u2014 an AQ. token is a different kind of credential and this API refuses it.';
+  if(status === 429) return 'Gemini is rate-limiting the key. Wait a minute and try again.';
+  if(status === 403) return 'Gemini refused the key. Check the Generative Language API is enabled on its project.';
+  if(status === 404) return 'That Gemini model is not available to this key.';
+  return 'Gemini returned ' + status + '.';
+}
+
+async function geminiReadPeriods(names){
+  const key = CFG.geminiKey;
+  if(!key) throw new Error('No Gemini key saved.');
+  if(/^AQ\./.test(key))
+    throw new Error('That is an AQ. token, not an API key. This API only accepts keys beginning with AIza.');
+
+  const prompt =
+    'These are names of school classes. For each, work out the class period, ' +
+    'block, or hour it meets, if the name says so.\n' +
+    'Rules: a number that is part of the subject (Algebra 2, Chemistry 101, ' +
+    'Spanish III, AP Physics C) is NOT a period. Letter blocks map A=1, B=2 and so on. ' +
+    'If the name does not state a period, use null.\n' +
+    'Reply with JSON only, no prose: {"results":[{"name":"<exact input name>","period":<number or null>}]}\n\n' +
+    names.map(n => '- ' + n).join('\n');
+
+  const body = {
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature: 0, responseMimeType: 'application/json' }
+  };
+
+  let lastErr = null;
+  for(const model of (geminiModel ? [geminiModel] : GEMINI_MODELS)){
+    let res, txt;
+    try{
+      res = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify(body)
+      });
+      txt = await res.text();
+    }catch(e){ lastErr = new Error('Could not reach Gemini: ' + e.message); continue; }
+
+    if(!res.ok){ lastErr = new Error(geminiHint(res.status, txt)); continue; }
+    try{
+      const data = JSON.parse(txt);
+      const out = (((data.candidates||[])[0]||{}).content||{}).parts||[];
+      const raw = (out[0]||{}).text || '';
+      const parsed = JSON.parse(String(raw).replace(/```json|```/g,'').trim());
+      geminiModel = model;
+      return Array.isArray(parsed.results) ? parsed.results : [];
+    }catch(e){ lastErr = new Error('Gemini answered with something that was not the JSON asked for.'); }
+  }
+  throw lastErr || new Error('Gemini did not answer.');
+}
+
+function periodNote(txt){ $('#periodNote').textContent = txt; }
+
+async function sortByPeriod(){
+  const btn = $('#btnPeriod');
+  btn.disabled = true;
+  try{
+    let found = COURSES.map(c => ({ c, p: detectPeriod(c) }));
+    let unread = found.filter(x => x.p == null);
+    let aiNote = '';
+
+    /* The reader handles most names on its own; Gemini only sees the
+       leftovers, and only if you've saved a key. */
+    if(unread.length && CFG.geminiKey){
+      periodNote('Asking Gemini about ' + unread.length +
+        (unread.length === 1 ? ' class name\u2026' : ' class names\u2026'));
+      try{
+        const results = await geminiReadPeriods(unread.map(x => x.c.name));
+        let got = 0;
+        results.forEach(r => {
+          const hit = unread.find(x => x.c.name === r.name) ||
+                      unread.find(x => String(r.name||'').indexOf(x.c.name) === 0);
+          if(hit && typeof r.period === 'number' && isFinite(r.period)){
+            AI_PERIODS[hit.c.key] = r.period; got++;
+          }
+        });
+        store.set('cb.aiPeriods', JSON.stringify(AI_PERIODS));
+        found = COURSES.map(c => ({ c, p: detectPeriod(c) }));
+        unread = found.filter(x => x.p == null);
+        aiNote = got ? ' Gemini worked out ' + got + ' more.' : ' Gemini could not place any of the rest.';
+      }catch(e){
+        aiNote = ' Gemini step failed: ' + e.message;
+      }
+    }
+
+    const hits = found.filter(x => x.p != null);
+    if(!hits.length){
+      periodNote('No periods found in your class names. Set them from any card\u2019s \u22ee menu, or drag the cards.' + aiNote);
+      return;
+    }
+    found.sort((x, y) => {
+      if(x.p != null && y.p != null) return x.p - y.p || x.c.name.localeCompare(y.c.name);
+      if(x.p != null) return -1;
+      if(y.p != null) return 1;
+      return x.c.name.localeCompare(y.c.name);
+    });
+    found.forEach((x, i) => setCard(x.c.key, { order: i }));
+    periodNote('Ordered by period \u2014 ' + hits.length + ' of ' + found.length + ' classes.' +
+      (unread.length ? ' ' + unread.length + ' had no period and went last; set one from the \u22ee menu.' : '') + aiNote);
+    renderDash();
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function orderedCourses(){
+  return COURSES.slice().sort((a, b) => {
+    const oa = cardOf(a).order, ob = cardOf(b).order;
+    if(oa != null && ob != null) return oa - ob;
+    if(oa != null) return -1;
+    if(ob != null) return 1;
+    return 0;
+  });
+}
 
 function allItems(){ return COURSES.flatMap(c => c.items || []); }
 
@@ -949,7 +1262,8 @@ function applyFilter(items){
   const now = new Date(), soon = new Date(Date.now() + 7*DAY);
   if(filter === 'missing') return items.filter(i => i.status === 'missing');
   if(filter === 'graded')  return items.filter(i => i.status === 'graded');
-  if(filter === 'soon')    return items.filter(i => i.due && i.due >= midnight(now) && i.due <= soon && i.status!=='graded' && i.status!=='submitted');
+  if(filter === 'soon')    return items.filter(i => i.due && i.due >= midnight(now) && i.due <= soon &&
+                                                    i.status !== 'graded' && i.status !== 'submitted');
   return items;
 }
 
@@ -963,30 +1277,32 @@ function sortByDue(items, newestFirst){
 }
 
 function rowNode(item, showCourse){
+  const course = COURSES.find(c => c.key === item.courseKey);
   const btn = el('button','row');
-  btn.style.setProperty('--spine', SRC[item.source].color);
+  if(course) btn.style.setProperty('--cardcolor', cardOf(course).color);
   const r = railFor(item);
-  btn.appendChild(el('div','rail '+r.cls, r.txt));
+  btn.appendChild(el('div','rail ' + r.cls, r.txt));
 
   const main = el('div','main');
   main.appendChild(el('div','t', item.title));
   const meta = el('div','m');
-  meta.appendChild(el('em', null, SRC[item.source].label));
-  if(showCourse) meta.appendChild(el('span', null, item.courseName));
-  if(item.due) meta.appendChild(el('span', null, item.due.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' · ' + timeLabel(item.due)));
-  else meta.appendChild(el('span', null, 'No due date'));
+  if(showCourse){
+    meta.appendChild(el('span','dotcol'));
+    meta.appendChild(el('span', null, course ? cardOf(course).name : item.courseName));
+  }
+  meta.appendChild(el('span', null, item.due
+    ? item.due.toLocaleDateString(undefined,{month:'short',day:'numeric'}) + ' \u00b7 ' + timeLabel(item.due)
+    : 'No due date'));
   main.appendChild(meta);
   btn.appendChild(main);
 
   const right = el('div','right');
   const pts = el('div','pts');
-  if(item.score != null && item.points != null){
-    pts.innerHTML = esc(item.score) + '<small>/' + esc(item.points) + '</small>';
-  } else if(item.points != null){
-    pts.className = 'pts empty'; pts.textContent = '–/' + item.points;
-  } else { pts.className='pts empty'; pts.textContent = '—'; }
+  if(item.score != null && item.points != null) pts.innerHTML = esc(item.score) + '<small>/' + esc(item.points) + '</small>';
+  else if(item.points != null){ pts.className='pts none'; pts.textContent = '-/' + item.points; }
+  else { pts.className='pts none'; pts.textContent = '-'; }
   right.appendChild(pts);
-  right.appendChild(el('span','pill '+item.status, item.status));
+  right.appendChild(el('span','pill ' + item.status, item.status));
   btn.appendChild(right);
 
   btn.addEventListener('click', () => window.open(item.url, '_blank', 'noopener'));
@@ -996,7 +1312,8 @@ function rowNode(item, showCourse){
 function renderBoard(node, items, showCourse){
   node.innerHTML = '';
   if(!items.length){
-    node.appendChild(el('div','empty', filter==='missing' ? 'Nothing missing. Keep it that way.' : 'Nothing here right now.'));
+    node.appendChild(el('div','empty', filter === 'missing'
+      ? 'Nothing missing. Keep it that way.' : 'Nothing here right now.'));
     return;
   }
   let lastKey = null;
@@ -1012,54 +1329,237 @@ function renderBoard(node, items, showCourse){
   });
 }
 
+/* ------------------------------------------------------------------ *
+ * Cards
+ * ------------------------------------------------------------------ */
+function cardNode(course){
+  const cfg = cardOf(course);
+  const ink = readableOn(cfg.color);
+  const now = new Date(), soon = new Date(Date.now() + 7*DAY);
+
+  const card = el('div','card');
+  card.dataset.key = course.key;
+  card.style.setProperty('--cardcolor', cfg.color);
+  card.style.setProperty('--banner-ink', ink);
+
+  const banner = el('div','banner');
+  const head = el('div');
+  head.appendChild(el('h3', null, cfg.name));
+  if(course.section) head.appendChild(el('div','sec', course.section));
+  banner.appendChild(head);
+  banner.appendChild(el('div','src', SRC[course.source].label));
+
+  const pd = detectPeriod(course);
+  if(pd != null) banner.appendChild(el('div','pd', pd === 0 ? 'P0' : 'P' + pd));
+
+  const grip = el('button','grip','\u2059');
+  grip.title = 'Drag to reorder';
+  grip.setAttribute('aria-label','Drag to reorder ' + cfg.name);
+  banner.appendChild(grip);
+
+  const kebab = el('button','kebab','\u22ee');
+  kebab.title = 'Rename or recolour';
+  kebab.setAttribute('aria-label','Options for ' + cfg.name);
+  kebab.addEventListener('click', e => { e.stopPropagation(); openCardMenu(course, kebab); });
+  banner.appendChild(kebab);
+  card.appendChild(banner);
+
+  const body = el('div','cardbody');
+  const g = el('div','gradeval mono');
+  if(course.score == null){
+    g.className = 'gradeval mono none';
+    g.textContent = course.error ? 'Unavailable' : (course.calendar ? 'Due dates only' : 'No grade yet');
+  } else {
+    g.innerHTML = pctText(course.score) + '<small>%' + (course.letter ? ' ' + esc(course.letter) : '') + '</small>';
+  }
+  body.appendChild(g);
+
+  const miss = (course.items||[]).filter(i => i.status === 'missing').length;
+  const up = (course.items||[]).filter(i => i.due && i.due >= midnight(now) && i.due <= soon &&
+                                            i.status !== 'graded' && i.status !== 'submitted').length;
+  const t = el('div','tally');
+  t.innerHTML = up + ' due<br>' + (miss ? '<i>' + miss + ' missing</i>' : '0 missing');
+  body.appendChild(t);
+  card.appendChild(body);
+
+  attachCardPointer(card, course, grip);
+  return card;
+}
+
+/* ------------------------------------------------------------------ *
+ * Drag to reorder. A press that never really moves counts as a click,
+ * so the same gesture both opens a class and drags it.
+ * ------------------------------------------------------------------ */
+let dragState = null;
+function attachCardPointer(card, course, grip){
+  card.addEventListener('pointerdown', e => {
+    if(e.button !== 0) return;
+    if(e.target.closest('.kebab')) return;
+    const fromGrip = !!e.target.closest('.grip');
+    dragState = {
+      card, course, fromGrip, startX:e.clientX, startY:e.clientY,
+      moved:false, pointerId:e.pointerId, placeholder:null, rect:card.getBoundingClientRect()
+    };
+    card.setPointerCapture(e.pointerId);
+  });
+
+  card.addEventListener('pointermove', e => {
+    const d = dragState;
+    if(!d || d.card !== card) return;
+    const dx = e.clientX - d.startX, dy = e.clientY - d.startY;
+    if(!d.moved){
+      if(Math.abs(dx) + Math.abs(dy) < (d.fromGrip ? 3 : 8)) return;
+      d.moved = true;
+      d.offX = d.startX - d.rect.left;
+      d.offY = d.startY - d.rect.top;
+      const ph = el('div','card-ph');
+      ph.style.height = d.rect.height + 'px';
+      d.placeholder = ph;
+      /* The card stays where it is in the DOM — moving it would hand the
+         pointer capture back and the drag would die on the first step. */
+      card.parentNode.insertBefore(ph, card);
+      card.classList.add('floating');
+      card.style.width = d.rect.width + 'px';
+    }
+    card.style.left = (e.clientX - d.offX) + 'px';
+    card.style.top  = (e.clientY - d.offY) + 'px';
+    positionPlaceholder(e.clientX, e.clientY, d);
+  });
+
+  const finish = e => {
+    const d = dragState;
+    if(!d || d.card !== card) return;
+    dragState = null;
+    try{ card.releasePointerCapture(d.pointerId); }catch(err){}
+    if(!d.moved){
+      openCourse(course.key);
+      return;
+    }
+    card.classList.remove('floating');
+    card.style.left = card.style.top = card.style.width = '';
+    $('#courseGrid').insertBefore(card, d.placeholder);
+    d.placeholder.remove();
+    [...$('#courseGrid').children].forEach((n, i) => { if(n.dataset.key) setCard(n.dataset.key, { order:i }); });
+    $('#periodNote').textContent = 'Order saved.';
+  };
+  card.addEventListener('pointerup', finish);
+  card.addEventListener('pointercancel', finish);
+}
+
+function positionPlaceholder(x, y, d){
+  const grid = $('#courseGrid');
+  const others = [...grid.children].filter(n => n !== d.placeholder && n !== d.card);
+  let best = null, bestDist = Infinity, after = false;
+  others.forEach(n => {
+    const r = n.getBoundingClientRect();
+    const cx = r.left + r.width/2, cy = r.top + r.height/2;
+    const dist = Math.abs(x - cx) + Math.abs(y - cy);
+    if(dist < bestDist){ bestDist = dist; best = n; after = x > cx; }
+  });
+  if(!best) return;
+  const ref = after ? best.nextSibling : best;
+  if(ref !== d.placeholder) grid.insertBefore(d.placeholder, ref);
+}
+
+/* ------------------------------------------------------------------ *
+ * Card menu: rename, recolour, reset
+ * ------------------------------------------------------------------ */
+let openMenu = null;
+function closeCardMenu(){ if(openMenu){ openMenu.remove(); openMenu = null; } }
+
+function openCardMenu(course, anchor){
+  closeCardMenu();
+  const cfg = cardOf(course);
+  const m = el('div','menu');
+
+  m.appendChild(el('h4', null, 'Class card'));
+  const nameIn = document.createElement('input');
+  nameIn.type = 'text'; nameIn.value = cfg.name; nameIn.setAttribute('aria-label','Class name');
+  m.appendChild(nameIn);
+
+  const pdWrap = el('div');
+  pdWrap.style.cssText = 'display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12.5px;color:var(--ink-2)';
+  pdWrap.appendChild(el('span', null, 'Period'));
+  const pdIn = document.createElement('input');
+  pdIn.type = 'number'; pdIn.min = '0'; pdIn.max = '20';
+  pdIn.style.cssText = 'width:64px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;background:var(--surface-2);font-family:var(--mono);font-size:12.5px';
+  const auto = readPeriod(course.name) != null ? readPeriod(course.name) : readPeriod(course.section || '');
+  pdIn.placeholder = auto == null ? 'none' : String(auto);
+  pdIn.value = typeof (CARDS[course.key]||{}).period === 'number' ? (CARDS[course.key]||{}).period : '';
+  pdIn.setAttribute('aria-label','Period number for ' + cfg.name);
+  pdWrap.appendChild(pdIn);
+  pdWrap.appendChild(el('span', null, auto == null ? 'not found in the name' : 'read from the name'));
+  pdWrap.lastChild.style.cssText = 'font-size:11px;color:var(--muted)';
+  m.appendChild(pdWrap);
+
+  const sw = el('div','swatches');
+  PALETTE.forEach(col => {
+    const b = el('button','sw');
+    b.style.background = col;
+    b.setAttribute('aria-pressed', String(col.toLowerCase() === cfg.color.toLowerCase()));
+    b.setAttribute('aria-label','Use colour ' + col);
+    b.addEventListener('click', () => {
+      [...sw.children].forEach(c => c.setAttribute('aria-pressed','false'));
+      b.setAttribute('aria-pressed','true');
+      setCard(course.key, { color: col });
+      renderDash();
+    });
+    sw.appendChild(b);
+  });
+  m.appendChild(sw);
+
+  const row = el('div','row');
+  const reset = el('button', null, 'Reset to default');
+  reset.addEventListener('click', () => {
+    setCard(course.key, { name:null, color:null, period:null });
+    closeCardMenu(); renderDash();
+  });
+  const save = el('button','main','Save');
+  save.addEventListener('click', () => {
+    const v = nameIn.value.trim();
+    const pv = pdIn.value.trim();
+    setCard(course.key, {
+      name: (v && v !== course.name) ? v : null,
+      period: pv === '' ? null : Math.max(0, Math.min(20, parseInt(pv, 10) || 0))
+    });
+    closeCardMenu(); renderDash();
+  });
+  row.appendChild(reset); row.appendChild(save);
+  m.appendChild(row);
+
+  document.body.appendChild(m);
+  const r = anchor.getBoundingClientRect(), mr = m.getBoundingClientRect();
+  m.style.top = Math.min(r.bottom + 6, window.innerHeight - mr.height - 10) + 'px';
+  m.style.left = Math.max(10, Math.min(r.right - mr.width, window.innerWidth - mr.width - 10)) + 'px';
+  openMenu = m;
+  nameIn.focus(); nameIn.select();
+  nameIn.addEventListener('keydown', e => { if(e.key === 'Enter') save.click(); if(e.key === 'Escape') closeCardMenu(); });
+  setTimeout(() => {
+    document.addEventListener('pointerdown', function away(ev){
+      if(openMenu && !openMenu.contains(ev.target)){ closeCardMenu(); document.removeEventListener('pointerdown', away); }
+    });
+  }, 0);
+}
+
 function renderDash(){
   const items = allItems();
   const now = new Date(), soon = new Date(Date.now() + 7*DAY);
-  const dueSoon = items.filter(i => i.due && i.due >= midnight(now) && i.due <= soon && i.status!=='graded' && i.status!=='submitted');
+  const dueSoon = items.filter(i => i.due && i.due >= midnight(now) && i.due <= soon &&
+                                    i.status !== 'graded' && i.status !== 'submitted');
   const missing = items.filter(i => i.status === 'missing');
-  const scored  = COURSES.filter(c => c.score != null);
-  const avg = scored.length ? scored.reduce((s,c)=>s+c.score,0)/scored.length : null;
+  const scored = COURSES.filter(c => c.score != null);
+  const avg = scored.length ? scored.reduce((s,c) => s + c.score, 0) / scored.length : null;
 
-  $('#rDue').textContent  = dueSoon.length;
+  $('#rDue').textContent = dueSoon.length;
   $('#rMiss').textContent = missing.length;
-  $('#rAvg').textContent  = avg==null ? '—' : pctText(avg)+'%';
+  $('#rAvg').textContent = avg == null ? '\u2014' : pctText(avg) + '%';
 
-  const grid = $('#courseGrid'); grid.innerHTML = '';
-  $('#cCount').textContent = COURSES.length + ' total';
-  COURSES.forEach(c => {
-    const card = el('button','card');
-    card.style.setProperty('--spine', SRC[c.source].color);
-    card.appendChild(el('div','src', SRC[c.source].label));
-    card.appendChild(el('h3', null, c.name));
-    card.appendChild(el('div','sub', c.section || ''));
-
-    const foot = el('div','foot');
-    const g = el('div','gradeval mono');
-    if(c.score == null){
-      g.className='gradeval mono none';
-      g.textContent = c.error ? 'Unavailable' : (c.calendar ? 'Due dates only' : 'No grade yet');
-    }
-    else g.innerHTML = pctText(c.score) + '<small>%' + (c.letter ? ' ' + esc(c.letter) : '') + '</small>';
-    foot.appendChild(g);
-
-    const miss = (c.items||[]).filter(i=>i.status==='missing').length;
-    const up   = (c.items||[]).filter(i=>i.due && i.due>=midnight(now) && i.due<=soon && i.status!=='graded' && i.status!=='submitted').length;
-    const t = el('div','tally');
-    t.innerHTML = up + ' due<br>' + (miss ? '<i>'+miss+' missing</i>' : '0 missing');
-    foot.appendChild(t);
-    card.appendChild(foot);
-
-    card.addEventListener('click', () => openCourse(c.key));
-    grid.appendChild(card);
-  });
-
-  /* Canvas tokens expire or get revoked; say so plainly and offer the fix. */
   const cv = cvTrouble || (function(){ try{ return JSON.parse(store.get('cb.cvBad')||'null'); }catch(e){ return null; } })();
   $('#cvAlert').classList.toggle('hidden', !cv);
   if(cv){
     $('#cvAlertTitle').textContent = cv.expired ? 'Your Canvas token has stopped working' : 'Canvas could not be loaded';
     $('#cvAlertText').textContent = cv.expired
-      ? 'Canvas turned it down, which normally means it expired or was revoked. Make a new one and paste it into Settings — takes a minute.'
+      ? 'Canvas turned it down, which normally means it expired or was revoked. Make a new one and paste it into Settings \u2014 takes a minute.'
       : cv.message;
     $('#btnFixToken').classList.toggle('hidden', !CFG.cvUrl);
     $('#btnFixToken').href = CFG.cvUrl + '/profile/settings#access_tokens';
@@ -1074,34 +1574,169 @@ function renderDash(){
     $('#btnGcBanner').classList.toggle('hidden', !CFG.hasGoogle || CFG.hasFeed);
   }
 
+  const grid = $('#courseGrid');
+  grid.innerHTML = '';
+  $('#cCount').textContent = COURSES.length + ' total';
+  orderedCourses().forEach(c => grid.appendChild(cardNode(c)));
+
   const shown = applyFilter(items);
   $('#aCount').textContent = shown.length + ' shown';
   renderBoard($('#allBoard'), shown, true);
 }
 
-function openCourse(key){
-  const c = COURSES.find(x => x.key === key);
-  if(!c) return;
-  const now = new Date();
-  $('#dSrc').textContent = SRC[c.source].label;
-  $('#dSrc').style.setProperty('--spine', SRC[c.source].color);
-  $('#dName').textContent = c.name;
-  const g = $('#dGrade');
-  if(c.score == null){
-    g.className='gradeval mono none';
-    g.textContent = c.calendar ? 'Due dates only' : 'No grade yet';
-  }
-  else { g.className='gradeval mono'; g.innerHTML = pctText(c.score) + '<small>%' + (c.letter?' '+esc(c.letter):'') + '</small>'; }
-  const miss = (c.items||[]).filter(i=>i.status==='missing').length;
-  $('#dTally').innerHTML = (c.items||[]).length + ' items · ' + (miss ? '<i>'+miss+' missing</i>' : 'none missing');
-  $('#dLink').href = c.url;
-  renderBoard($('#courseBoard'), c.items || [], false);
-  show('viewCourse');
-  window.scrollTo(0,0);
+/* ------------------------------------------------------------------ *
+ * Course page — assignments, announcements, discussions, materials
+ * ------------------------------------------------------------------ */
+const KIND_ICON = { announcement:'\u25A4', discussion:'\u2687', material:'\u25A7' };
+let courseTab = 'all';
+
+function stripHtml(v){
+  return String(v||'').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ')
+    .replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+    .replace(/\s+/g,' ').trim();
 }
 
+/* Posts cost two extra calls, so Canvas only fetches them when you
+   actually open a class. */
+async function ensureExtras(course){
+  if(course.extrasDone || course.source !== 'canvas') return;
+  course.extrasDone = true;
+  const posts = [];
+  try{
+    const ann = await canvasGet('/api/v1/courses/' + course.id + '/discussion_topics?only_announcements=true&per_page=50');
+    ann.forEach(a => posts.push(mapTopic(a, 'announcement', course)));
+  }catch(e){ course.postsError = e.message; }
+  try{
+    const dis = await canvasGet('/api/v1/courses/' + course.id + '/discussion_topics?per_page=50');
+    const have = new Set(posts.map(p => p.id));
+    dis.forEach(a => { const m = mapTopic(a, a.is_announcement ? 'announcement' : 'discussion', course);
+      if(!have.has(m.id)) posts.push(m); });
+  }catch(e){ course.postsError = course.postsError || e.message; }
+  course.posts = posts;
+}
+
+function mapTopic(a, kind, course){
+  return {
+    id:'t-' + a.id, kind,
+    title:a.title || 'Untitled',
+    at:a.posted_at ? new Date(a.posted_at) : (a.created_at ? new Date(a.created_at) : null),
+    author:a.user_name || (a.author && a.author.display_name) || '',
+    preview:stripHtml(a.message).slice(0, 220),
+    url:a.html_url || course.url,
+    replies:a.discussion_subentry_count || 0
+  };
+}
+
+function postNode(p){
+  const btn = el('button','post');
+  btn.appendChild(el('div','ic ' + p.kind, KIND_ICON[p.kind] || '\u25A7'));
+  const box = el('div');
+  box.appendChild(el('div','t', p.title));
+  const bits = [];
+  bits.push(p.kind === 'announcement' ? 'Announcement' : p.kind === 'discussion' ? 'Discussion' : 'Material');
+  if(p.at) bits.push(p.at.toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}));
+  if(p.author) bits.push(p.author);
+  if(p.replies) bits.push(p.replies + (p.replies === 1 ? ' reply' : ' replies'));
+  box.appendChild(el('div','m', bits.join('  \u00b7  ')));
+  if(p.preview) box.appendChild(el('div','p', p.preview));
+  btn.appendChild(box);
+  btn.addEventListener('click', () => window.open(p.url, '_blank', 'noopener'));
+  return btn;
+}
+
+function courseTabsFor(course){
+  const items = course.items || [], posts = course.posts || [];
+  const n = k => posts.filter(p => p.kind === k).length;
+  const tabs = [{ key:'all', label:'All', count:items.length + posts.length },
+                { key:'assignments', label:'Assignments', count:items.length }];
+  if(n('announcement') || course.source === 'canvas') tabs.push({ key:'announcement', label:'Announcements', count:n('announcement') });
+  if(n('discussion') || course.source === 'canvas') tabs.push({ key:'discussion', label:'Discussions', count:n('discussion') });
+  if(n('material')) tabs.push({ key:'material', label:'Materials', count:n('material') });
+  return tabs;
+}
+
+function renderCourseBody(course){
+  const node = $('#courseBoard');
+  node.innerHTML = '';
+  const posts = (course.posts || []).slice().sort((a,b) => (b.at||0) - (a.at||0));
+
+  if(courseTab === 'assignments' || (courseTab === 'all' && !posts.length)){
+    renderBoard(node, course.items || [], false);
+    return;
+  }
+  if(courseTab === 'all'){
+    const head = el('div','daybar'); head.appendChild(el('b', null, 'Recent posts'));
+    node.appendChild(head);
+    posts.slice(0, 6).forEach(p => node.appendChild(postNode(p)));
+    const head2 = el('div','daybar'); head2.appendChild(el('b', null, 'Assignments'));
+    node.appendChild(head2);
+    const inner = el('div');
+    renderBoard(inner, course.items || [], false);
+    while(inner.firstChild) node.appendChild(inner.firstChild);
+    return;
+  }
+  const list = posts.filter(p => p.kind === courseTab);
+  if(!list.length){
+    node.appendChild(el('div','empty', course.postsError
+      ? course.postsError
+      : (course.source === 'canvas' ? 'Nothing posted here.' : 'Your Classroom feed does not carry these yet \u2014 redeploy the script to pick them up.')));
+    return;
+  }
+  list.forEach(p => node.appendChild(postNode(p)));
+}
+
+function paintCourse(course){
+  const cfg = cardOf(course);
+  const head = $('#courseHead');
+  head.style.setProperty('--cardcolor', cfg.color);
+  head.style.setProperty('--banner-ink', readableOn(cfg.color));
+  $('#dName').textContent = cfg.name;
+  $('#dSec').textContent = [course.section, SRC[course.source].label].filter(Boolean).join('  \u00b7  ');
+  if(course.score == null){
+    $('#dGrade').textContent = course.calendar ? '\u2014' : '\u2014';
+    $('#dGradeLabel').textContent = course.calendar ? 'due dates only' : 'no grade yet';
+  } else {
+    $('#dGrade').textContent = pctText(course.score) + '%';
+    $('#dGradeLabel').textContent = course.letter ? String(course.letter) : 'current grade';
+  }
+  $('#dLink').href = course.url;
+
+  const tabs = $('#courseTabs');
+  tabs.innerHTML = '';
+  courseTabsFor(course).forEach(t => {
+    const b = el('button','tab');
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-selected', String(t.key === courseTab));
+    b.textContent = t.label;
+    b.appendChild(el('em', null, String(t.count)));
+    b.addEventListener('click', () => { courseTab = t.key; paintCourse(course); });
+    tabs.appendChild(b);
+  });
+  renderCourseBody(course);
+}
+
+async function openCourse(key){
+  const course = COURSES.find(x => x.key === key);
+  if(!course) return;
+  closeCardMenu();
+  courseTab = 'all';
+  paintCourse(course);
+  show('viewCourse');
+  window.scrollTo(0,0);
+  if(course.source === 'canvas' && !course.extrasDone){
+    $('#courseBoard').innerHTML = '';
+    $('#courseBoard').appendChild(el('div','loading','Loading posts\u2026'));
+    await ensureExtras(course);
+    if(!$('#viewCourse').classList.contains('hidden')) paintCourse(course);
+  }
+}
+
+let lastView = null;
 function show(id){
   ['viewSetup','viewDash','viewCourse'].forEach(v => $('#'+v).classList.toggle('hidden', v !== id));
+  /* Switching views while scrolled down used to leave you looking at
+     blank space below the new page. */
+  if(id !== lastView){ lastView = id; window.scrollTo(0,0); }
   $('#btnBack').classList.toggle('hidden', id !== 'viewSetup' || !COURSES.length);
 }
 
@@ -1170,25 +1805,34 @@ function loadDemo(){
   demoMode = true;
   const d = n => new Date(Date.now() + n*DAY);
   COURSES = [
-    { key:'d1', source:'canvas', name:'Organic Chemistry II', section:'CHEM 232', score:88.4, letter:'B+', url:'#', items:[
+    { key:'d1', source:'canvas', name:'Organic Chemistry II - Period 2', section:'CHEM 232', score:88.4, letter:'B+', url:'#', items:[
       {id:'a',source:'canvas',courseKey:'d1',courseName:'Organic Chemistry II',title:'Problem Set 7 — Aldol Condensation',due:d(0),points:25,score:null,status:'todo',url:'#'},
       {id:'b',source:'canvas',courseKey:'d1',courseName:'Organic Chemistry II',title:'Lab Report: Grignard Synthesis',due:d(3),points:50,score:null,status:'todo',url:'#'},
       {id:'c',source:'canvas',courseKey:'d1',courseName:'Organic Chemistry II',title:'Problem Set 6',due:d(-6),points:25,score:22,status:'graded',url:'#'},
       {id:'d',source:'canvas',courseKey:'d1',courseName:'Organic Chemistry II',title:'Safety Quiz',due:d(-2),points:10,score:null,status:'missing',url:'#'}
     ]},
-    { key:'d2', source:'gc', name:'AP United States History', section:'Period 3', score:94.1, letter:null, url:'#', items:[
-      {id:'e',source:'gc',courseKey:'d2',courseName:'AP United States History',title:'DBQ: Reconstruction Amendments',due:d(1),points:100,score:null,status:'todo',url:'#'},
-      {id:'f',source:'gc',courseKey:'d2',courseName:'AP United States History',title:'Chapter 14 Reading Notes',due:d(4),points:20,score:null,status:'submitted',url:'#'},
-      {id:'g',source:'gc',courseKey:'d2',courseName:'AP United States History',title:'Primary Source Analysis',due:d(-9),points:30,score:29,status:'graded',url:'#'}
+    { key:'d2', source:'feed', name:'AP United States History', section:'Period 3', score:94.1, letter:null, url:'#', items:[
+      {id:'e',source:'feed',courseKey:'d2',courseName:'AP United States History',title:'DBQ: Reconstruction Amendments',due:d(1),points:100,score:null,status:'todo',url:'#'},
+      {id:'f',source:'feed',courseKey:'d2',courseName:'AP United States History',title:'Chapter 14 Reading Notes',due:d(4),points:20,score:null,status:'submitted',url:'#'},
+      {id:'g',source:'feed',courseKey:'d2',courseName:'AP United States History',title:'Primary Source Analysis',due:d(-9),points:30,score:29,status:'graded',url:'#'}
     ]},
-    { key:'d3', source:'canvas', name:'Linear Algebra', section:'MATH 221', score:76.0, letter:'C', url:'#', items:[
+    { key:'d3', source:'canvas', name:'Linear Algebra P1', section:'MATH 221', score:76.0, letter:'C', url:'#', items:[
       {id:'h',source:'canvas',courseKey:'d3',courseName:'Linear Algebra',title:'Homework 9 — Eigenvectors',due:d(2),points:40,score:null,status:'todo',url:'#'},
       {id:'i',source:'canvas',courseKey:'d3',courseName:'Linear Algebra',title:'Homework 8',due:d(-4),points:40,score:null,status:'missing',url:'#'},
       {id:'j',source:'canvas',courseKey:'d3',courseName:'Linear Algebra',title:'Midterm 2',due:d(12),points:150,score:null,status:'todo',url:'#'}
     ]},
-    { key:'d4', source:'gc', name:'Studio Art: Printmaking', section:'', score:null, letter:null, url:'#', items:[
-      {id:'k',source:'gc',courseKey:'d4',courseName:'Studio Art: Printmaking',title:'Linocut final — bring plates',due:d(5),points:null,score:null,status:'todo',url:'#'}
+    { key:'d4', source:'ics', calendar:true, name:'Studio Art: Printmaking (4th period)', section:'', score:null, letter:null, url:'#', items:[
+      {id:'k',source:'ics',courseKey:'d4',courseName:'Studio Art: Printmaking',title:'Linocut final — bring plates',due:d(5),points:null,score:null,status:'todo',url:'#'}
     ]}
+  ];
+  COURSES.forEach(c => { c.posts = []; c.extrasDone = true; });
+  COURSES[0].posts = [
+    {id:'p1',kind:'announcement',title:'Exam 2 review session moved to Thursday',at:new Date(Date.now()-2*DAY),author:'Dr. Alvarez',preview:'We are shifting the review to Thursday 4pm in Latimer 120. Bring your problem sets.',url:'#',replies:0},
+    {id:'p2',kind:'discussion',title:'Post-lab questions, week 6',at:new Date(Date.now()-5*DAY),author:'Dr. Alvarez',preview:'Answer both prompts and reply to one classmate before Sunday.',url:'#',replies:14}
+  ];
+  COURSES[1].posts = [
+    {id:'p3',kind:'announcement',title:'DBQ rubric posted',at:new Date(Date.now()-1*DAY),author:'Mr. Whitfield',preview:'Read the rubric before you start drafting. Thesis is worth more than last time.',url:'#',replies:0},
+    {id:'p4',kind:'material',title:'Reconstruction primary source packet',at:new Date(Date.now()-8*DAY),author:'Mr. Whitfield',preview:'',url:'#',replies:0}
   ];
   setStamp('Sample data');
   renderDash();
@@ -1203,6 +1847,7 @@ function fillForm(){
   $('#gcIcs').value = CFG.icsList.join('\n');
   $('#gcFeed').value = CFG.feedUrl;
   $('#gcFeedKey').value = CFG.feedKey;
+  $('#gemKey').value = CFG.geminiKey;
   $('#originHelp').textContent = 'Add ' + location.origin + ' as an authorized JavaScript origin in Google Cloud.';
 
   $('#relayOnly').classList.toggle('hidden', IS_EXT);
@@ -1366,6 +2011,7 @@ $('#btnSave').addEventListener('click', async () => {
   const feed = tidyFeedUrl($('#gcFeed').value);
   store.set('cb.feed', feed.url);
   store.set('cb.feedKey', (feed.key || $('#gcFeedKey').value).trim());
+  store.set('cb.gemKey', $('#gemKey').value.trim());
   store.set('cb.ics', $('#gcIcs').value.split('\n').map(x=>x.trim()).filter(Boolean).join('\n'));
   demoMode = false; gToken = null;
   if(base && !ok){
@@ -1402,10 +2048,23 @@ $('#btnGcBanner').addEventListener('click', e => connectClassroom(e.currentTarge
 
 $('#btnClear').addEventListener('click', () => {
   if(!confirm('This removes your Canvas token and settings from this browser. Continue?')) return;
-  ['cb.cvUrl','cb.cvTok','cb.cvProxy','cb.gcId','cb.gcExt','cb.ics','cb.feed','cb.feedKey','cb.cvBad','cb.last'].forEach(k => store.del(k));
+  ['cb.cvUrl','cb.cvTok','cb.cvProxy','cb.gcId','cb.gcExt','cb.ics','cb.feed','cb.feedKey','cb.cvBad','cb.gemKey','cb.aiPeriods','cb.cards','cb.last'].forEach(k => store.del(k));
   COURSES = []; demoMode = false; gToken = null;
   fillForm(); setStamp(''); show('viewSetup');
 });
+
+$('#btnPeriod').addEventListener('click', sortByPeriod);
+
+$('#btnResetAll').addEventListener('click', () => {
+  if(!confirm('Put every class card back to its original name, colour and position?')) return;
+  CARDS = {}; saveCards(CARDS);
+  AI_PERIODS = {}; store.del('cb.aiPeriods');
+  $('#periodNote').textContent = 'All cards reset.';
+  renderDash();
+});
+
+window.addEventListener('resize', closeCardMenu);
+window.addEventListener('scroll', closeCardMenu, { passive:true });
 
 $('#filters').addEventListener('click', e => {
   const b = e.target.closest('.chip'); if(!b) return;
@@ -1433,6 +2092,27 @@ function liveTidy(inputId, hintId, fn){
 liveTidy('cvUrl','cvUrlHint', tidyCanvasUrl);
 liveTidy('cvProxy','cvProxyHint', tidyRelayUrl);
 liveTidy('gcFeed','gcFeedHint', v => tidyFeedUrl(v).url);
+
+/* Say straight away if the key is the wrong kind, rather than at first use. */
+(function(){
+  const inp = $('#gemKey'), hint = $('#gemHint');
+  const paint = () => {
+    const v = inp.value.trim();
+    if(!v){ hint.textContent=''; hint.className='hint'; return; }
+    if(/^AQ\./.test(v)){
+      hint.textContent = 'This is an AQ. token. The Gemini API rejects these \u2014 you need a key starting with AIza.';
+      hint.className = 'hint warn'; return;
+    }
+    if(!/^AIza/.test(v)){
+      hint.textContent = 'Gemini keys normally start with AIza. Double-check this one.';
+      hint.className = 'hint warn'; return;
+    }
+    hint.textContent = '\u2713 Looks like a Gemini key.';
+    hint.className = 'hint';
+  };
+  inp.addEventListener('input', paint);
+  paint();
+})();
 
 $('#cvUrl').addEventListener('input', () => {
   const base = tidyCanvasUrl($('#cvUrl').value);
