@@ -465,15 +465,31 @@ details.acc code,.help code,.intro code{font-family:var(--mono);font-size:11.5px
 
     <div class="panel">
       <h2>3 &middot; Gemini <span style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:400">optional</span></h2>
-      <p>Classboard reads periods out of your class names on its own and needs no key for it. Add one only if you have classes it can&rsquo;t make sense of &mdash; then <b>Sort by period</b> sends just those leftover names to Gemini.</p>
-      <div class="field">
+      <p>Classboard reads periods out of your class names by itself and needs no key for it. Add Gemini only if some of your classes are named in a way it can&rsquo;t follow &mdash; then <b>Sort by period</b> sends just those leftover names.</p>
+
+      <div class="subhead">Best way &mdash; put the key in your script <span class="tag">nothing public</span></div>
+      <p style="color:var(--ink-2);margin:6px 0 12px;font-size:13.5px">If you already set up the Classroom feed, it can carry the key for you. The key sits inside your Apps Script, which only you can see, and this page just asks the script for answers. Nothing secret ever reaches your public repo.</p>
+      <details class="acc" style="border-top:0;padding-top:0">
+        <summary>How to switch it on</summary>
+        <ol>
+          <li>Get a key at <code>aistudio.google.com/apikey</code>. <b>It does not have to be your school account</b> &mdash; a key made on a personal Google account works fine inside a script running on your school account.</li>
+          <li>Open your script at <code>script.google.com</code> and find the <code>GEMINI_KEY</code> line near the top.</li>
+          <li>Paste the key between the quotes. Save.</li>
+          <li>Pick <b>testGemini</b> in the function dropdown and press <b>Run</b>. The log should show a period for the Biology line and <code>null</code> for Algebra 2.</li>
+          <li><b>Deploy &rarr; Manage deployments &rarr; pencil &rarr; Version: New version &rarr; Deploy.</b> It will ask permission again, because the script now needs to reach the internet.</li>
+        </ol>
+      </details>
+
+      <div class="subhead">Or keep it in this browser <span class="tag alt">no feed needed</span></div>
+      <div class="field" style="margin-top:10px">
         <label for="gemKey">Gemini API key</label>
         <input id="gemKey" type="password" placeholder="AIza..." autocomplete="off" spellcheck="false">
         <div class="hint" id="gemHint"></div>
-        <div class="help">Get one at <code>aistudio.google.com/apikey</code>. It is kept in this browser only, exactly like your Canvas token &mdash; never written into <code>index.html</code>, so it never lands in your public repo.</div>
+        <div class="help">Only used when there&rsquo;s no Classroom feed to ask. Stored in this browser like your Canvas token &mdash; never written into <code>index.html</code>.</div>
       </div>
-      <div class="notice"><b>Keys that work start with <code>AIza</code>.</b> If AI Studio only gives you <code>AQ.</code> tokens, that account is restricted to a credential type this API rejects &mdash; common on school Google accounts. A personal Google account will usually issue a normal key.</div>
-      <div class="notice"><b>Never paste a key into <code>index.html</code>.</b> Your repo is public, so anyone could read it out of view-source, and Google and GitHub both scan for exposed keys and revoke them. Your class names go to Google only when you press Sort by period; nothing else is sent.</div>
+
+      <div class="notice"><b><code>AQ.</code> keys only work through the script.</b> Google is moving from standard keys (<code>AIza</code>) to authorization keys (<code>AQ.</code>), and the newer ones need the Interactions endpoint, which sends a header browsers aren&rsquo;t allowed to send. So an <code>AQ.</code> key cannot work from this page &mdash; but it works fine from your Apps Script, which isn&rsquo;t bound by that rule. Use the script route above.</div>
+      <div class="notice"><b>Never paste a key into <code>index.html</code>.</b> Your repo is public, so anyone could read it from view-source, and Google and GitHub both scan for exposed keys and revoke them. Your class names go to Google only when you press Sort by period; nothing else is sent.</div>
     </div>
 
     <div class="panel">
@@ -1140,18 +1156,37 @@ let geminiModel = null;
 function geminiHint(status, body){
   const t = String(body||'');
   if(/API_KEY_INVALID|API key not valid/i.test(t))
-    return 'Google rejected that key. Keys that work start with AIza \u2014 an AQ. token is a different kind of credential and this API refuses it.';
+    return 'Google rejected that key. If it starts with AQ. it can only be used from your Apps Script, not from this page.';
   if(status === 429) return 'Gemini is rate-limiting the key. Wait a minute and try again.';
   if(status === 403) return 'Gemini refused the key. Check the Generative Language API is enabled on its project.';
   if(status === 404) return 'That Gemini model is not available to this key.';
   return 'Gemini returned ' + status + '.';
 }
 
+/* Route A: ask the Apps Script feed, which holds the key privately.
+   Nothing secret ever reaches this page. */
+async function geminiViaFeed(names){
+  const url = CFG.feedUrl +
+    (CFG.feedUrl.includes('?') ? '&' : '?') + 'key=' + encodeURIComponent(CFG.feedKey) +
+    '&mode=periods&names=' + encodeURIComponent(JSON.stringify(names));
+  const res = await fetch(CFG.cvProxy.replace(/\/+$/,'') + '/?url=' + encodeURIComponent(url));
+  const text = await res.text();
+  let data;
+  try{ data = JSON.parse(text); }
+  catch(e){
+    if(/<html|sign in/i.test(text)) throw new Error('The feed asked for a login. Redeploy it with access set to Anyone.');
+    throw new Error('The feed did not answer with data.');
+  }
+  if(!data.ok) throw new Error(data.error || 'The feed refused the request.');
+  return Array.isArray(data.results) ? data.results : [];
+}
+
 async function geminiReadPeriods(names){
+  if(CFG.hasFeed) return geminiViaFeed(names);
   const key = CFG.geminiKey;
-  if(!key) throw new Error('No Gemini key saved.');
+  if(!key) throw new Error('No Gemini key saved, and no Classroom feed to ask.');
   if(/^AQ\./.test(key))
-    throw new Error('That is an AQ. token, not an API key. This API only accepts keys beginning with AIza.');
+    throw new Error('AQ. keys need the Interactions endpoint, which a browser is not allowed to call. Put the key in your Apps Script instead \u2014 see Settings.');
 
   const prompt =
     'These are names of school classes. For each, work out the class period, ' +
@@ -1204,7 +1239,7 @@ async function sortByPeriod(){
 
     /* The reader handles most names on its own; Gemini only sees the
        leftovers, and only if you've saved a key. */
-    if(unread.length && CFG.geminiKey){
+    if(unread.length && (CFG.hasFeed || CFG.geminiKey)){
       periodNote('Asking Gemini about ' + unread.length +
         (unread.length === 1 ? ' class name\u2026' : ' class names\u2026'));
       try{
@@ -2100,11 +2135,11 @@ liveTidy('gcFeed','gcFeedHint', v => tidyFeedUrl(v).url);
     const v = inp.value.trim();
     if(!v){ hint.textContent=''; hint.className='hint'; return; }
     if(/^AQ\./.test(v)){
-      hint.textContent = 'This is an AQ. token. The Gemini API rejects these \u2014 you need a key starting with AIza.';
+      hint.textContent = 'AQ. keys cannot work from a browser. Put this one in your Apps Script instead \u2014 it works there.';
       hint.className = 'hint warn'; return;
     }
     if(!/^AIza/.test(v)){
-      hint.textContent = 'Gemini keys normally start with AIza. Double-check this one.';
+      hint.textContent = 'Gemini keys normally start with AIza or AQ. Double-check this one.';
       hint.className = 'hint warn'; return;
     }
     hint.textContent = '\u2713 Looks like a Gemini key.';
