@@ -406,6 +406,33 @@ const pctText = v => v==null ? null : (Math.round(v*10)/10).toFixed(1).replace(/
 /* ------------------------------------------------------------------ *
  * Canvas — every call goes through the relay you deploy
  * ------------------------------------------------------------------ */
+function escHtml(v){
+  return String(v==null?'':v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* Canvas is specific about why it says no — surface that instead of a bare code. */
+function canvasHint(status, body){
+  let txt = String(body||'').trim();
+  try{
+    const j = JSON.parse(txt);
+    const m = (j.errors && (j.errors[0]||{}).message) || j.message || j.error;
+    if(m) txt = m;
+  }catch(e){ txt = txt.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim(); }
+  txt = txt.slice(0, 220);
+
+  if(status === 401)
+    return 'Canvas turned down the token. Make a fresh one at Account → Settings → New Access Token.';
+  if(status === 403 && /rate limit/i.test(txt))
+    return 'Canvas is rate-limiting this token. Wait a minute and try again — nothing is misconfigured.';
+  if(status === 403 && /not authorized|unauthorized|permission/i.test(txt))
+    return 'Your Canvas account is not permitted to use that part of the API. Usually a school setting.';
+  if(status === 403)
+    return 'Canvas refused this request (403). Canvas said: ' + (txt || '(nothing)');
+  if(status === 404)
+    return 'Canvas has nothing at that address — check the Canvas address for a typo.';
+  return 'Canvas returned ' + status + (txt ? ('. Canvas said: ' + txt) : '');
+}
+
 async function canvasRequest(url){
   if(IS_EXT){
     let r;
@@ -413,15 +440,21 @@ async function canvasRequest(url){
     catch(e){ throw new Error('The extension background stopped. Reload Classboard at chrome://extensions.'); }
     if(!r) throw new Error('The extension background stopped. Reload Classboard at chrome://extensions.');
     if(r.denied) throw new Error('Chrome hasn\'t been allowed to read ' + CFG.cvUrl + '. Open Settings and save again, then click Allow.');
-    if(!r.ok) throw new Error(r.error ? ('Could not reach Canvas: ' + r.error) : ('Canvas returned ' + r.status));
+    if(!r.ok){
+      if(r.error) throw new Error('Could not reach Canvas: ' + r.error);
+      const err = new Error(canvasHint(r.status, r.body)); err.status = r.status; err.body = r.body; throw err;
+    }
     return { body: r.body, link: r.link };
   }
   if(!CFG.cvProxy) throw new Error('No relay address is set.');
   const res = await fetch(CFG.cvProxy.replace(/\/+$/,'') + '/?url=' + encodeURIComponent(url), {
     headers: { 'X-Canvas-Token': CFG.cvTok }
   });
-  if(!res.ok) throw new Error('Canvas returned ' + res.status);
-  return { body: await res.text(), link: res.headers.get('Link') };
+  const body = await res.text();
+  if(!res.ok){
+    const err = new Error(canvasHint(res.status, body)); err.status = res.status; err.body = body; throw err;
+  }
+  return { body, link: res.headers.get('Link') };
 }
 
 async function canvasGet(path){
@@ -908,17 +941,31 @@ async function runTest(){
   steps.push({state:'wait', html:'Checking…'}); draw();
   const saveUrl = store.get('cb.cvUrl'), saveTok = store.get('cb.cvTok'), saveRelay = store.get('cb.cvProxy');
   store.set('cb.cvUrl', base); store.set('cb.cvTok', tok); store.set('cb.cvProxy', relay);
-  let last;
+  /* Profile lookup is the friendliest check, but plenty of student accounts
+     aren't allowed it. What actually matters is whether courses load, so if
+     the profile is refused we go straight to the endpoint the app relies on. */
+  let last, whoami = null;
   try{
-    const { body } = await canvasRequest(base + '/api/v1/users/self');
+    const { body } = await canvasRequest(base + '/api/v1/users/self/profile');
     const me = JSON.parse(body);
-    last = me && me.name
-      ? {state:'pass', html:'Signed in as <em>'+esc(me.name)+'</em> — everything works.'}
-      : {state:'pass', html:'Token accepted.'};
+    whoami = me && (me.name || me.short_name);
+  }catch(e){ /* fall through to the courses check */ }
+
+  try{
+    const { body } = await canvasRequest(base + '/api/v1/courses?enrollment_state=active&per_page=1');
+    const list = JSON.parse(body);
+    if(Array.isArray(list)){
+      last = whoami
+        ? {state:'pass', html:'Signed in as <em>'+escHtml(whoami)+'</em>, and your classes load. Everything works.'}
+        : {state:'pass', html:'Your classes load — everything works. (Canvas won\'t share your profile with the token, which is common and harmless.)'};
+    } else {
+      last = {state:'fail', html:'Canvas answered, but not with a class list. '+escHtml(canvasHint(200, body))};
+    }
   }catch(e){
-    last = /401|rejected/i.test(e.message)
-      ? {state:'fail', html:'Canvas turned down the token. Make a fresh one at Account → Settings → New Access Token.'}
-      : {state:'fail', html:esc(e.message)};
+    last = {state:'fail', html:escHtml(e.message)};
+    if(e.status === 403 && !/rate-limiting/.test(e.message)){
+      last.html += '<br><br>Your relay and address are both fine, so this is Canvas turning the token down rather than a setup mistake. Most often: the token was made on a different Canvas account, or your school limits API access for students. Try generating a brand new token first.';
+    }
   }
   if(saveUrl===null && saveTok===null){ store.del('cb.cvUrl'); store.del('cb.cvTok'); store.del('cb.cvProxy'); }
   steps[steps.length-1] = last; draw();
