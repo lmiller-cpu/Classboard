@@ -179,6 +179,30 @@ details.acc summary{font-family:var(--mono);font-size:11px;letter-spacing:.08em;
 details.acc ol{font-size:13.5px;color:var(--ink-2);line-height:1.65;padding-left:20px;margin:12px 0 0}
 details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--line)}
 
+.intro{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;margin:22px 0 18px;box-shadow:var(--shadow)}
+.intro h1{font-family:var(--display);font-size:22px;font-weight:600;letter-spacing:-.02em;margin:0 0 6px}
+.intro p{color:var(--ink-2);margin:0 0 14px;max-width:64ch;font-size:14px}
+.intro p.mini{font-size:12.5px;color:var(--muted);margin:14px 0 0}
+.strip{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);
+  border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.strip-item{background:var(--surface-2);padding:10px 13px}
+.strip-item b{display:block;font-family:var(--display);font-size:13px;font-weight:600}
+.strip-item span{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.strip-item.on{background:var(--ok-soft)} .strip-item.on span{color:var(--ok)}
+.hint{font-family:var(--mono);font-size:11.5px;margin-top:5px;color:var(--ok);min-height:1em}
+.hint.warn{color:var(--warn)}
+.linkbtn{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;border:1px solid var(--line);border-radius:7px;padding:6px 11px;
+  text-decoration:none;color:var(--ink-2)}
+.linkbtn:hover{border-color:var(--muted);color:var(--ink)}
+.alert{border:1px solid var(--danger);border-left-width:3px;background:var(--danger-soft);
+  border-radius:8px;padding:13px 15px;margin:0 0 18px;display:flex;gap:14px;
+  align-items:center;flex-wrap:wrap}
+.alert div{flex:1;min-width:230px;font-size:13.5px;line-height:1.5;color:var(--ink)}
+.alert b{display:block;font-family:var(--display);font-size:14px;margin-bottom:3px}
+details.acc ol li{margin-bottom:5px}
+details.acc ol ul{margin:5px 0 0;padding-left:18px}
 .diag{margin-top:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .diag .step{display:flex;gap:11px;padding:10px 13px;border-top:1px solid var(--line);font-size:13px;align-items:flex-start}
 .diag .step:first-child{border-top:0}
@@ -201,6 +225,16 @@ details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface
   .gbtn:hover{background:#1B1B1C}
   .gbtn:disabled{background:#131314}
 }
+.alertbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:20px 0 0;
+  padding:13px 16px;border-radius:var(--radius);border:1px solid var(--line);
+  border-left:4px solid var(--muted);background:var(--surface);box-shadow:var(--shadow)}
+.alertbar.bad{border-left-color:var(--danger);background:var(--danger-soft)}
+.alertbar.warn{border-left-color:var(--warn);background:var(--warn-soft)}
+.alertbar .ab-text{flex:1;min-width:210px;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.alertbar .ab-text b{display:block;font-family:var(--display);font-size:14px;color:var(--ink);margin-bottom:2px}
+.alertbar .ab-acts{display:flex;gap:8px;flex-wrap:wrap}
+.alertbar .btn{padding:8px 14px;font-size:13px}
+.alertbar a.btn{text-decoration:none;display:inline-flex;align-items:center}
 .empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:14px}
 .notice{border:1px solid var(--line);border-left:3px solid var(--warn);background:var(--surface);
   border-radius:7px;padding:11px 14px;font-size:13px;color:var(--ink-2);margin:14px 0;line-height:1.5}
@@ -232,85 +266,119 @@ details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface
 
 <main class="wrap">
 
+  <div class="alertbar hidden" id="alertBar">
+    <div class="ab-text"><b id="alertTitle"></b><span id="alertBody"></span></div>
+    <div class="ab-acts">
+      <a class="btn ghost" id="alertLink" target="_blank" rel="noopener">Open Canvas</a>
+      <button class="btn" id="alertFix">Update token</button>
+    </div>
+  </div>
+
   <!-- SETUP -->
   <section id="viewSetup" class="hidden">
-    <div class="panel">
-      <h2>Connect Canvas</h2>
-      <p id="cvIntro">Canvas won't accept requests straight from a web page, so this connects through a small relay you run yourself. Setup is a one-time, five-minute job and stays free.</p>
-      <div class="field">
-        <label for="cvUrl">Canvas address</label>
-        <input id="cvUrl" placeholder="https://yourschool.instructure.com" autocomplete="off" spellcheck="false">
-        <div class="help">The address you normally log in at, with nothing after the domain.</div>
+
+    <div class="intro">
+      <h1>Set up Classboard</h1>
+      <p>This gathers your Canvas and Google Classroom classes onto one page — grades, due dates, and anything missing. Everything you type stays in this browser. There's no account, no sign-up, and no server of mine in the middle.</p>
+      <div class="strip">
+        <div class="strip-item" id="stCanvas"><b>Canvas</b><span>not set up</span></div>
+        <div class="strip-item" id="stClass"><b>Classroom</b><span>not set up</span></div>
       </div>
-      <div class="field">
-        <label for="cvTok">Canvas access token</label>
-        <input id="cvTok" type="password" placeholder="1234~abcdef..." autocomplete="off" spellcheck="false">
-        <div class="help">In Canvas: Account → Settings → New Access Token. Copy it once; Canvas won't show it again.</div>
-      </div>
-      <div id="extOnly" class="hidden">
-        <div class="notice" id="permNote"><b>One more thing:</b> when you save, Chrome will ask whether this extension may read your Canvas site. Click Allow — nothing loads without it.</div>
-      </div>
-      <div class="btnrow" style="margin:2px 0 0"><button class="btn ghost" id="btnTest">Test connection</button></div>
-      <div id="testOut" class="diag hidden"></div>
-      <div id="relayOnly">
-      <div class="field">
-        <label for="cvProxy">Relay address</label>
-        <input id="cvProxy" placeholder="https://classboard-relay.yourname.workers.dev" autocomplete="off" spellcheck="false">
-        <div class="help">From the Cloudflare Worker you deploy — see the setup steps below.</div>
-      </div>
-      <details class="acc">
-        <summary>How to set up the relay</summary>
-        <ol>
-          <li>Sign in at <code>dash.cloudflare.com</code> and open Compute → Workers.</li>
-          <li>Create a Worker, name it <code>classboard-relay</code>, deploy the starter.</li>
-          <li>Click Edit code, delete everything, and paste in <code>canvas-proxy.js</code> from this folder.</li>
-          <li>Change the <code>ALLOWED_HOSTS</code> line near the top to your Canvas domain, then Deploy.</li>
-          <li>Copy the <code>*.workers.dev</code> address into the relay field above.</li>
-        </ol>
-      </details>
-      </div>
+      <p class="mini">Set aside about 15 minutes the first time. Canvas needs two things — a token, and a small free relay you deploy once. Classroom is optional and can wait.</p>
     </div>
 
     <div class="panel">
-      <h2>Connect Google Classroom</h2>
-      <p id="gcIntro">Classroom needs some way to prove it's you. Three routes below — the first works from a school account and needs no Google Cloud project.</p>
+      <h2>1 &middot; Canvas</h2>
+      <p id="cvIntro">Canvas won't answer a web page directly, so this needs a token to prove it's you, and a relay to carry the request. Both are free and both are one-time.</p>
 
-      <div class="subhead">1 · Classroom feed <span class="tag">full grades · no project</span></div>
+      <div class="field">
+        <label for="cvUrl">Your school's Canvas address</label>
+        <input id="cvUrl" placeholder="rchs.instructure.com" autocomplete="off" spellcheck="false">
+        <div class="hint" id="cvUrlHint"></div>
+        <div class="help">Log into Canvas in another tab and copy what's in the address bar — the whole thing is fine, extra bits get trimmed. If your school uses a plain <code>.instructure.com</code> address you can type just the first word.</div>
+      </div>
+
+      <div class="field">
+        <label for="cvTok">Canvas access token</label>
+        <input id="cvTok" type="password" placeholder="1234~abcdefgh..." autocomplete="off" spellcheck="false">
+        <div class="btnrow" style="margin:9px 0 0"><a class="linkbtn hidden" id="cvTokLink" target="_blank" rel="noopener">Open my Canvas token page &#8599;</a></div>
+        <div class="help">On that page, scroll to <b>Approved Integrations</b> &rarr; <b>+ New Access Token</b>. Purpose: anything. Leave the expiry blank so it doesn't stop working. Then <b>Generate Token</b> and copy it immediately &mdash; Canvas shows it once and never again.</div>
+      </div>
+
+      <div id="extOnly" class="hidden">
+        <div class="notice" id="permNote"><b>One more thing:</b> when you save, Chrome asks whether this extension may read your Canvas site. Click Allow &mdash; nothing loads without it.</div>
+      </div>
+
+      <div id="relayOnly">
+        <div class="field">
+          <label for="cvProxy">Relay address</label>
+          <input id="cvProxy" placeholder="https://classboard-relay.yourname.workers.dev" autocomplete="off" spellcheck="false">
+          <div class="hint" id="cvProxyHint"></div>
+          <div class="help">You get this after the steps below. Nothing loads until it's filled in.</div>
+        </div>
+        <details class="acc">
+          <summary>Never set up the relay? Full steps here</summary>
+          <ol>
+            <li>Download <code>canvas-proxy.js</code>. Open a new browser tab, press <b>Ctrl+O</b>, choose the file &mdash; it opens as plain text. Press <b>Ctrl+A</b> then <b>Ctrl+C</b> to copy all of it.</li>
+            <li>Go to <code>dash.cloudflare.com</code> and sign up. It's free and asks for no card.</li>
+            <li>Left sidebar &rarr; <b>Workers &amp; Pages</b> &rarr; <b>Create application</b> &rarr; <b>Start with Hello World!</b> &rarr; <b>Get started</b>.</li>
+            <li>Name it <code>classboard-relay</code> &rarr; <b>Deploy</b>. First time only, Cloudflare asks you to pick a subdomain; anything is fine.</li>
+            <li><b>Continue to project</b> &rarr; <b>Edit code</b>.</li>
+            <li>Click in the editor, <b>Ctrl+A</b>, <b>Delete</b>, then <b>Ctrl+V</b> to paste the relay code in.</li>
+            <li>Near the top, swap <code>yourschool.instructure.com</code> for your real Canvas domain. Keep the quotes and the comma.</li>
+            <li><b>Deploy</b>. Copy the <code>*.workers.dev</code> address from the Worker's page into the box above.</li>
+          </ol>
+        </details>
+      </div>
+
+      <div class="btnrow" style="margin:16px 0 0"><button class="btn ghost" id="btnTest">Test connection</button></div>
+      <div id="testOut" class="diag hidden"></div>
+    </div>
+
+    <div class="panel">
+      <h2>2 &middot; Google Classroom <span style="font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:400">optional</span></h2>
+      <p id="gcIntro">Classroom needs some way to prove it's you. Three routes below &mdash; try the first, which works from a school account and needs no Google Cloud project. Skip this whole panel if you only use Canvas.</p>
+
+      <div class="subhead">1 &middot; Classroom feed <span class="tag">full grades &middot; no project</span></div>
       <div class="field">
         <label for="gcFeed">Feed link</label>
         <input id="gcFeed" placeholder="https://script.google.com/macros/s/AKfy.../exec" autocomplete="off" spellcheck="false">
+        <div class="hint" id="gcFeedHint"></div>
       </div>
       <div class="field">
         <label for="gcFeedKey">Feed key</label>
         <input id="gcFeedKey" type="password" placeholder="the phrase you set inside the script" autocomplete="off" spellcheck="false">
-        <div class="help">A short script runs inside your own Google account, reads Classroom, and passes the answer to this page. Google authorises it as you, so there's no project, client ID, or consent screen anywhere in it.</div>
+        <div class="help">A short script runs inside your own Google account, reads Classroom, and passes the answer here. Google authorises it as you, so no project, client ID, or consent screen is involved anywhere.</div>
       </div>
       <details class="acc">
-        <summary>How to set the feed up</summary>
+        <summary>Never set up the feed? Full steps here</summary>
         <ol>
           <li>Open <code>script.google.com/create</code> signed in with your school account.</li>
-          <li>Delete the sample code, paste in all of <code>classroom-feed.gs</code>.</li>
-          <li>Change the <code>SECRET</code> line to a long phrase of your own. Keep it.</li>
-          <li>Left sidebar → <b>Project Settings</b> → tick <b>Show "appsscript.json" manifest file in editor</b>.</li>
-          <li>Back in <b>Editor</b>, open <code>appsscript.json</code>, replace everything in it with the file of that name, save.</li>
-          <li>Pick <code>testFeed</code> in the function dropdown and press <b>Run</b>. Approve the permissions — you'll see "Google hasn't verified this app", which is expected for your own script: <b>Advanced</b> → <b>Go to…</b>. The log should list your classes.</li>
-          <li><b>Deploy</b> → <b>New deployment</b> → gear icon → <b>Web app</b>. Execute as <b>Me</b>, Who has access <b>Anyone</b>. <b>Deploy</b>.</li>
+          <li>Delete the sample code and paste in all of <code>classroom-feed.gs</code>.</li>
+          <li>On line 15 you'll see <code>const SECRET = 'CHANGE-ME';</code>. Replace <code>CHANGE-ME</code> with a long phrase of your own &mdash; a few unrelated words. Keep the quotes. Write the phrase down.</li>
+          <li>Press <b>Ctrl+S</b> to save.</li>
+          <li>Left sidebar &rarr; <b>Project Settings</b> &rarr; tick <b>Show "appsscript.json" manifest file in editor</b>.</li>
+          <li>Back in <b>Editor</b>, click <code>appsscript.json</code>, select all, and replace it with the contents of the <code>appsscript.json</code> file. Save. Skipping this causes a permissions error later.</li>
+          <li>In the toolbar above the code there's a dropdown showing a function name. Choose <b>testFeed</b>, then click <b>Run</b>.</li>
+          <li>Approve the permissions. "Google hasn't verified this app" is expected for your own script &mdash; <b>Advanced</b> &rarr; <b>Go to&hellip;</b>. The log at the bottom should list your classes.</li>
+          <li><b>Deploy</b> &rarr; <b>New deployment</b> &rarr; gear icon &rarr; <b>Web app</b>. Execute as <b>Me</b>, Who has access <b>Anyone</b> &rarr; <b>Deploy</b>.</li>
           <li>Copy the <b>Web app URL</b> ending in <code>/exec</code> into the field above, and your phrase into the key field.</li>
         </ol>
+        <p style="font-size:13px;color:var(--ink-2);margin:12px 0 0">Changed the script later? It won't take effect until you go <b>Deploy &rarr; Manage deployments &rarr; pencil &rarr; Version: New version &rarr; Deploy</b>.</p>
       </details>
-      <div class="notice">Anyone holding that link can call it, so the key is what protects your grades. Make it long, and don't post the link anywhere. To revoke it, open the script and change <code>SECRET</code>.</div>
+      <div class="notice">Anyone holding that link can call it, so the key is what protects your grades. Make it long, don't post the link anywhere, and change <code>SECRET</code> to revoke it.</div>
 
       <details class="acc">
-        <summary>2 · Class calendar links — due dates only, no grades</summary>
+        <summary>2 &middot; Class calendar links &mdash; due dates only, no grades</summary>
         <div class="field" style="margin-top:14px">
           <label for="gcIcs">Secret iCal addresses, one per line</label>
           <textarea id="gcIcs" spellcheck="false" placeholder="https://calendar.google.com/calendar/ical/.../private-abc123/basic.ics"></textarea>
-          <div class="help">Every class also has a calendar in Google Calendar. Open <code>calendar.google.com</code>, hover a class under <b>My calendars</b>, three dots → <b>Settings and sharing</b> → <b>Integrate calendar</b> → copy <b>Secret address in iCal format</b>. Treat these like passwords.</div>
+          <div class="help">Every class also has a calendar in Google Calendar. Open <code>calendar.google.com</code>, hover a class under <b>My calendars</b>, three dots &rarr; <b>Settings and sharing</b> &rarr; scroll to <b>Integrate calendar</b> &rarr; copy <b>Secret address in iCal format</b>. Treat these like passwords.</div>
         </div>
       </details>
 
       <details class="acc">
-        <summary>3 · Google client ID — full grades, needs a Cloud project</summary>
+        <summary>3 &middot; Google client ID &mdash; full grades, needs a Cloud project</summary>
         <div class="btnrow" style="margin:14px 0 12px">
           <button class="gbtn" id="btnGcExt" type="button"><svg width="18" height="18" aria-hidden="true"><use href="#g-logo"/></svg>Sign in with Google</button>
           <span class="status off" id="gcExtState">not connected</span>
@@ -321,26 +389,50 @@ details.acc code{font-family:var(--mono);font-size:12px;background:var(--surface
             <input id="gcId" placeholder="123456789-abc.apps.googleusercontent.com" autocomplete="off" spellcheck="false">
             <div class="help" id="originHelp"></div>
           </div>
-          <div class="help">Only worth doing if you can reach <code>console.cloud.google.com</code>. Many school accounts can't, which is what route 1 is for.</div>
+          <div class="help">Only worth trying if you can reach <code>console.cloud.google.com</code>. Many school accounts can't, which is what route 1 is for.</div>
         </div>
         <div id="gcExtOnly" class="hidden">
           <div class="help">Put a Chrome Extension client ID on the <code>client_id</code> line of <code>manifest.json</code>, reload the extension, then press the button above.</div>
         </div>
       </details>
 
-      <div class="notice"><b>If every route fails:</b> some districts block student accounts from all of this — Cloud Console, Apps Script deployments, and outside apps alike. Canvas still works on its own.</div>
+      <div class="notice"><b>If every route fails:</b> some districts block student accounts from all of this &mdash; Cloud Console, script deployments, and outside apps alike. Canvas still works on its own.</div>
     </div>
 
-    <div class="btnrow" style="margin:18px 0 40px">
-      <button class="btn" id="btnSave">Save and load</button>
-      <button class="btn ghost" id="btnDemo">See a sample first</button>
-      <button class="btn ghost hidden" id="btnBack">Back to classes</button>
-      <button class="btn ghost" id="btnClear">Erase saved details</button>
+    <div class="panel">
+      <h2>3 &middot; Save</h2>
+      <p>Your settings live in this browser and come back automatically each time you open the page. You only redo this if you clear browsing data or switch device.</p>
+      <div class="btnrow">
+        <button class="btn" id="btnSave">Save and load</button>
+        <button class="btn ghost" id="btnDemo">See a sample first</button>
+        <button class="btn ghost hidden" id="btnBack">Back to classes</button>
+      </div>
+      <details class="acc">
+        <summary>Backup &amp; restore</summary>
+        <p style="font-size:13px;color:var(--ink-2);margin:12px 0 10px">Copy this code somewhere safe and you can restore everything on another device, or after clearing your browser. It contains your Canvas token and feed key, so treat it like a password.</p>
+        <div class="field">
+          <textarea id="backupBox" spellcheck="false" placeholder="Press Make backup code"></textarea>
+        </div>
+        <div class="btnrow">
+          <button class="btn ghost" id="btnBackup">Make backup code</button>
+          <button class="btn ghost" id="btnRestore">Restore from code</button>
+        </div>
+      </details>
+      <div class="btnrow" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">
+        <button class="btn ghost" id="btnClear">Erase everything from this browser</button>
+      </div>
     </div>
+
+    <div style="height:40px"></div>
   </section>
 
   <!-- DASHBOARD -->
   <section id="viewDash" class="hidden">
+    <div class="alert hidden" id="cvAlert">
+      <div><b id="cvAlertTitle">Your Canvas token has stopped working</b><span id="cvAlertText"></span></div>
+      <a class="linkbtn hidden" id="btnFixToken" target="_blank" rel="noopener">Make a new token &#8599;</a>
+      <button class="btn ghost" id="btnFixSettings" style="padding:7px 14px;font-size:13px">Paste it in</button>
+    </div>
     <div class="notice hidden" id="gcBanner" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
       <span style="flex:1;min-width:220px" id="gcBannerText">Google Classroom isn't connected.</span>
       <button class="gbtn" id="btnGcBanner" type="button"><svg width="18" height="18" aria-hidden="true"><use href="#g-logo"/></svg>Sign in with Google</button>
@@ -420,6 +512,7 @@ const SCOPES = [
 
 let COURSES = [];      // normalized courses, each with .items
 let gcTrouble = null;  // last Classroom failure, shown on the dashboard banner
+let cvTrouble = null;  // last Canvas failure, chiefly an expired token
 let filter = 'soon';
 let demoMode = false;
 
@@ -466,6 +559,37 @@ const pctText = v => v==null ? null : (Math.round(v*10)/10).toFixed(1).replace(/
 /* ------------------------------------------------------------------ *
  * Canvas — every call goes through the relay you deploy
  * ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------ *
+ * Forgiving input — people paste whole URLs, half URLs, and URLs with
+ * a query string on the end. Take whatever they give and tidy it.
+ * ------------------------------------------------------------------ */
+function tidyCanvasUrl(v){
+  let t = String(v||'').trim().replace(/\s+/g,'');
+  if(!t) return '';
+  t = t.replace(/^https?:\/\//i,'').split(/[\/?#]/)[0].toLowerCase();
+  if(!t) return '';
+  if(!t.includes('.')) t += '.instructure.com';   // "rchs" is enough
+  return 'https://' + t;
+}
+function tidyRelayUrl(v){
+  let t = String(v||'').trim().replace(/\s+/g,'');
+  if(!t) return '';
+  if(!/^https?:\/\//i.test(t)) t = 'https://' + t;
+  try{ return new URL(t).origin; }catch(e){ return t.replace(/\/+$/,''); }
+}
+/* Returns { url, key } — if they pasted the link with ?key= on it,
+   lift the key out rather than making them notice. */
+function tidyFeedUrl(v){
+  let t = String(v||'').trim().replace(/\s+/g,'');
+  if(!t) return { url:'', key:null };
+  let key = null;
+  const k = /[?&]key=([^&#]+)/.exec(t);
+  if(k){ try{ key = decodeURIComponent(k[1]); }catch(e){ key = k[1]; } }
+  const m = /^(https?:\/\/script\.google\.com\/[^\s?#]*?\/exec)/i.exec(t);
+  if(m) return { url:m[1], key };
+  return { url:t.replace(/[?#].*$/,'').replace(/\/+$/,''), key };
+}
+
 function escHtml(v){
   return String(v==null?'':v).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
@@ -929,6 +1053,18 @@ function renderDash(){
     grid.appendChild(card);
   });
 
+  /* Canvas tokens expire or get revoked; say so plainly and offer the fix. */
+  const cv = cvTrouble || (function(){ try{ return JSON.parse(store.get('cb.cvBad')||'null'); }catch(e){ return null; } })();
+  $('#cvAlert').classList.toggle('hidden', !cv);
+  if(cv){
+    $('#cvAlertTitle').textContent = cv.expired ? 'Your Canvas token has stopped working' : 'Canvas could not be loaded';
+    $('#cvAlertText').textContent = cv.expired
+      ? 'Canvas turned it down, which normally means it expired or was revoked. Make a new one and paste it into Settings — takes a minute.'
+      : cv.message;
+    $('#btnFixToken').classList.toggle('hidden', !CFG.cvUrl);
+    $('#btnFixToken').href = CFG.cvUrl + '/profile/settings#access_tokens';
+  }
+
   const calErr = COURSES.find(c => c.calendar && c.error);
   const showBanner = !!gcTrouble || !!calErr;
   $('#gcBanner').classList.toggle('hidden', !showBanner);
@@ -982,9 +1118,16 @@ async function loadAll(){
   const problems = [];
   const results = [];
   gcTrouble = null;
+  cvTrouble = null;
   if(CFG.hasCanvas){
-    try{ results.push(...await loadCanvas()); }
-    catch(e){ problems.push('Canvas: ' + e.message); }
+    try{
+      results.push(...await loadCanvas());
+      store.del('cb.cvBad');
+    }catch(e){
+      problems.push('Canvas: ' + e.message);
+      cvTrouble = { message:e.message, expired: e.status === 401 };
+      store.set('cb.cvBad', JSON.stringify(cvTrouble));
+    }
   }
   if(CFG.hasFeed){
     try{ results.push(...await loadFeed()); }
@@ -1002,9 +1145,17 @@ async function loadAll(){
   $('#btnRefresh').disabled = false;
 
   if(!COURSES.length){
+    /* Nothing loaded. If something broke, stay on the dashboard so the
+       banner explaining it is actually visible; only fall back to setup
+       when there was genuinely nothing configured to try. */
+    if(cvTrouble || gcTrouble){
+      setStamp('');
+      renderDash();
+      show('viewDash');
+      return;
+    }
     show('viewSetup');
     setStamp('');
-    if(problems.length) alert(problems.join('\n\n'));
     return;
   }
   store.set('cb.last', String(Date.now()));
@@ -1062,6 +1213,18 @@ function fillForm(){
     $('#cvIntro').textContent = 'Your address and token are all this needs. Running as an extension means the browser lets it read Canvas directly, so there is nothing else to set up.';
     $('#gcIntro').textContent = 'Classroom needs a free client ID from Google, tied to this extension. Skip it if you only use Canvas.';
   }
+  const canvasOn = CFG.hasCanvas;
+  const classOn = CFG.hasFeed || CFG.hasCalendars || CFG.hasGoogle;
+  $('#stCanvas').className = 'strip-item' + (canvasOn ? ' on' : '');
+  $('#stCanvas').querySelector('span').textContent = canvasOn ? 'ready' : 'not set up';
+  $('#stClass').className = 'strip-item' + (classOn ? ' on' : '');
+  $('#stClass').querySelector('span').textContent = classOn
+    ? (CFG.hasFeed ? 'feed ready' : (CFG.hasCalendars ? 'calendars ready' : 'ready')) : 'not set up';
+
+  const link = $('#cvTokLink');
+  link.classList.toggle('hidden', !CFG.cvUrl);
+  if(CFG.cvUrl) link.href = CFG.cvUrl + '/profile/settings#access_tokens';
+
   const gcOn = !!gToken && !gcTrouble;
   $('#gcExtState').className = 'status ' + (gcOn ? 'on' : 'off');
   $('#gcExtState').textContent = gcOn ? 'connected' : 'not connected';
@@ -1095,15 +1258,15 @@ function diagRender(steps){
 }
 
 async function runTest(){
-  const base = $('#cvUrl').value.trim().replace(/\/+$/,'');
+  const base = tidyCanvasUrl($('#cvUrl').value);
   const tok  = $('#cvTok').value.trim();
-  const relay= $('#cvProxy').value.trim().replace(/\/+$/,'');
+  const relay= tidyRelayUrl($('#cvProxy').value);
   const steps = [];
   const draw = () => diagRender(steps);
 
   if(!base){ diagRender([{state:'fail', html:'Fill in your Canvas address first.'}]); return; }
   let host; try{ host = new URL(base).hostname; }
-  catch(e){ diagRender([{state:'fail', html:'That Canvas address is not a full URL. It should start with <em>https://</em>'}]); return; }
+  catch(e){ diagRender([{state:'fail', html:'That Canvas address could not be read. Try just the domain, like <em>rchs.instructure.com</em>'}]); return; }
 
   steps.push({state:'wait', html:'Checking…'}); draw();
 
@@ -1193,15 +1356,16 @@ $('#btnRefresh').addEventListener('click', () => { if(demoMode){ loadDemo(); } e
 $('#btnDemo').addEventListener('click', loadDemo);
 
 $('#btnSave').addEventListener('click', async () => {
-  const base = $('#cvUrl').value.trim().replace(/\/+$/,'');
+  const base = tidyCanvasUrl($('#cvUrl').value);
   /* asked first, while the click still counts as a user action */
   const ok = base ? await grantCanvasAccess(base) : true;
   store.set('cb.cvUrl', base);
   store.set('cb.cvTok', $('#cvTok').value.trim());
-  store.set('cb.cvProxy', $('#cvProxy').value.trim().replace(/\/+$/,''));
+  store.set('cb.cvProxy', tidyRelayUrl($('#cvProxy').value));
   store.set('cb.gcId', $('#gcId').value.trim());
-  store.set('cb.feed', $('#gcFeed').value.trim());
-  store.set('cb.feedKey', $('#gcFeedKey').value.trim());
+  const feed = tidyFeedUrl($('#gcFeed').value);
+  store.set('cb.feed', feed.url);
+  store.set('cb.feedKey', (feed.key || $('#gcFeedKey').value).trim());
   store.set('cb.ics', $('#gcIcs').value.split('\n').map(x=>x.trim()).filter(Boolean).join('\n'));
   demoMode = false; gToken = null;
   if(base && !ok){
@@ -1238,7 +1402,7 @@ $('#btnGcBanner').addEventListener('click', e => connectClassroom(e.currentTarge
 
 $('#btnClear').addEventListener('click', () => {
   if(!confirm('This removes your Canvas token and settings from this browser. Continue?')) return;
-  ['cb.cvUrl','cb.cvTok','cb.cvProxy','cb.gcId','cb.gcExt','cb.ics','cb.feed','cb.feedKey','cb.last'].forEach(k => store.del(k));
+  ['cb.cvUrl','cb.cvTok','cb.cvProxy','cb.gcId','cb.gcExt','cb.ics','cb.feed','cb.feedKey','cb.cvBad','cb.last'].forEach(k => store.del(k));
   COURSES = []; demoMode = false; gToken = null;
   fillForm(); setStamp(''); show('viewSetup');
 });
@@ -1248,6 +1412,62 @@ $('#filters').addEventListener('click', e => {
   filter = b.dataset.f;
   document.querySelectorAll('#filters .chip').forEach(c => c.setAttribute('aria-pressed', String(c === b)));
   renderDash();
+});
+
+/* show people what their typing was turned into, as they type */
+function liveTidy(inputId, hintId, fn){
+  const inp = $('#'+inputId), hint = $('#'+hintId);
+  if(!inp || !hint) return;
+  const paint = () => {
+    const raw = inp.value.trim();
+    if(!raw){ hint.textContent=''; hint.className='hint'; return; }
+    const out = fn(raw);
+    if(!out){ hint.textContent='Could not read that.'; hint.className='hint warn'; return; }
+    hint.textContent = (out === raw) ? '\u2713 ' + out : 'Will be saved as ' + out;
+    hint.className = 'hint';
+  };
+  inp.addEventListener('input', paint);
+  inp.addEventListener('blur', paint);
+  paint();
+}
+liveTidy('cvUrl','cvUrlHint', tidyCanvasUrl);
+liveTidy('cvProxy','cvProxyHint', tidyRelayUrl);
+liveTidy('gcFeed','gcFeedHint', v => tidyFeedUrl(v).url);
+
+$('#cvUrl').addEventListener('input', () => {
+  const base = tidyCanvasUrl($('#cvUrl').value);
+  const link = $('#cvTokLink');
+  link.classList.toggle('hidden', !base);
+  if(base) link.href = base + '/profile/settings#access_tokens';
+});
+
+/* lift a pasted ?key= into the key box instead of silently dropping it */
+$('#gcFeed').addEventListener('input', () => {
+  const f = tidyFeedUrl($('#gcFeed').value);
+  if(f.key && !$('#gcFeedKey').value) $('#gcFeedKey').value = f.key;
+});
+
+$('#btnFixSettings').addEventListener('click', () => { fillForm(); show('viewSetup'); window.scrollTo(0,0); });
+
+const BACKUP_KEYS = ['cb.cvUrl','cb.cvTok','cb.cvProxy','cb.gcId','cb.ics','cb.feed','cb.feedKey'];
+$('#btnBackup').addEventListener('click', () => {
+  const bag = {};
+  BACKUP_KEYS.forEach(k => { const v = store.get(k); if(v) bag[k] = v; });
+  if(!Object.keys(bag).length){ alert('Nothing saved yet to back up.'); return; }
+  try{
+    $('#backupBox').value = 'CLASSBOARD1:' + btoa(unescape(encodeURIComponent(JSON.stringify(bag))));
+    $('#backupBox').select();
+  }catch(e){ alert('Could not build a backup code.'); }
+});
+$('#btnRestore').addEventListener('click', () => {
+  const raw = $('#backupBox').value.trim();
+  if(!raw.startsWith('CLASSBOARD1:')){ alert('That does not look like a backup code.'); return; }
+  try{
+    const bag = JSON.parse(decodeURIComponent(escape(atob(raw.slice(12)))));
+    Object.keys(bag).forEach(k => { if(BACKUP_KEYS.includes(k)) store.set(k, bag[k]); });
+    fillForm();
+    alert('Restored. Press Save and load.');
+  }catch(e){ alert('That backup code could not be read.'); }
 });
 
 fillForm();
